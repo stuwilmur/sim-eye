@@ -32,9 +32,17 @@ def openimage(f):
     """
     return Image.open(f).convert('RGB')
 
+def deg2rad(x):
+    """
+    deg2rad:    return an angle give in degrees in radians
+
+    x:          angle in degrees
+    """
+    return x / 180 * np.pi
+
 def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2, 
          phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi, phi_no_cut = 0,
-         phi_cap = mt.pi / 2, pole_stitch = False):
+         phi_cap = mt.pi / 2, pole_stitch = False, alpha_limit = mt.pi):
     """
     make    returns an image that can be used as a gore net
     
@@ -46,7 +54,10 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     phi_max:        maximum latitude (radians)
     lam_min:        minimum longitude (radians)    
     lam_max:        maximum longitude (radians)
-    pole_stitch:    (bool) if True stitches the gores at the north pole instead of the equator 
+    phi_no_cut:     angular size of no-cut zone (radians)
+    phi_cap:        angular size of pole cap (radians)
+    pole_stitch:    if True stitches the gores at the north pole instead of the equator (bool)
+    alpha_limit:    no goring beyond this angle
     """
     
     # demand that the pole is included if the gores are to be stitched at the pole
@@ -131,6 +142,10 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
             # do nothing if we have gone off the edge
             if jnew < 0 or jnew >= wd2 or inew < 0 or inew >= ht2:
                 continue
+                
+            # do nothing if we have exceeded alpha_limit
+            if y > (alpha_limit - np.pi / 2):
+                continue
 
             projected[inew][jnew][0:3], projected[inew][jnew][3] = im2arr[i][j][0:3], 255
             
@@ -214,16 +229,18 @@ def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi):
     output = Image.fromarray(sinus)
     return output
 
-def equi(im, mm_per_px, focal_length = 24, numpoints = 1000):
+def equi(im, alpha_max, focal_length = 24, numpoints = 1000):
     """
     equi         takes a fundus image and computes its equirectangular projection
                  assuming a simple spherical eye model
+
+    im           input image (image)
             
-    mm_per_px    linear size of each pixel in the image
+    alpha_max    angular size of the image from the centre (radians)
             
-    focal length default assumes a focal length of one eye diameter
+    focal length default assumes a focal length of one eye diameter (mm)
     
-    numpoints    number of angles to sample
+    numpoints    number of angles to sample (number)
     """
     
     fundus = np.array(im)
@@ -232,16 +249,11 @@ def equi(im, mm_per_px, focal_length = 24, numpoints = 1000):
     d = focal_length
     r = 12
     
-    # convert the maximum image distance to an angle
-    Lp = ht/2 * mm_per_px
-    beta = np.arctan2(Lp , d)
-    deginrad = 1 / 180 * np.pi # 1 degree in radians
-    alpha_max = beta + np.arcsin((d/r - 1) * np.sin(beta))
-    
-    # subtract a small amount to avoid going off the edge
-    alpha_max -= deginrad
+    # subtract a small amount (1 degree) to avoid going off the edge
+    alpha_max -= deg2rad(1.0)
     phi_max = lam_max = float(alpha_max)
     phi_min, lam_min = -phi_max, -lam_max
+    Lp_max = d * r * np.sin(phi_max) / (d + r * (np.cos(phi_max) - 1))
     
     # set sampling
     fundus = np.array(fundus)
@@ -261,8 +273,8 @@ def equi(im, mm_per_px, focal_length = 24, numpoints = 1000):
             Lp_x = d * r * np.sin(phi) / (d + r * (np.cos(phi) - 1))
             Lp_y = d * r * np.sin(lam) / (d + r * (np.cos(lam) - 1))
             
-            i = np.floor(Lp_x / mm_per_px + ht / 2)
-            j = np.floor(Lp_y / mm_per_px + wd / 2)
+            i = np.floor(Lp_x / Lp_max * ht / 2 + ht / 2)
+            j = np.floor(Lp_y / Lp_max * wd / 2 + wd / 2)
             
             i, j = int(i), int(j)
             
@@ -274,34 +286,33 @@ def equi(im, mm_per_px, focal_length = 24, numpoints = 1000):
     equi_image = Image.fromarray(equi, mode="RGB")
     return (equi_image, float(lam_max), float(phi_max))
     
-def equi_zeiss(im, mm_per_px, focal_length = 24, numpoints = 1000):
+def equi_zeiss(im, alpha_max, focal_length = 24, numpoints = 1000):
     """
-    equi_zeiss  takes a zeiss composite of two fundus images and computes its 
-                equirectangular projection assuming a simple spherical eye model
+    equi_zeiss   takes a zeiss composite of two fundus images and computes its 
+                 equirectangular projection assuming a simple spherical eye model
+
+    im:          input image (image)
             
-    mm_per_px    linear size of each pixel in the image
+    alpha_max    angular size, in the vertical plane, of the image from the centre
+                 (radians)
             
-    focal length default assumes a focal length of one eye diameter
+    focal length default assumes a focal length of one eye diameter (mm)
     
-    numpoints    number of angles to sample
+    numpoints    number of angles to sample (number)
     """
 
     wd, ht = im.size
     im_l = im.crop((0,0,ht, ht))
-    equi_l, lm, pm = equi(im_l, mm_per_px, focal_length, numpoints)
+    equi_l, lm, pm = equi(im_l, alpha_max, focal_length, numpoints)
     im_r = im.crop((wd - ht + 1, 0, wd, ht))
-    equi_r, lm, pm = equi(im_r, mm_per_px, focal_length, numpoints)
+    equi_r, lm, pm = equi(im_r, alpha_max, focal_length, numpoints)
     
     d = focal_length
     r = 12
     
-    # convert the maximum image distance to an angle
-    Lp = ht/2 * mm_per_px
-    beta = np.arctan2(Lp , d)
-    alpha_max = beta + np.arcsin((d/r - 1) * np.sin(beta))
-    
     # convert the pole to image centre distance to an angle
-    Lp = (wd / 2 - ht / 2) * mm_per_px
+    Lp_max = d * r * np.sin(alpha_max) / (d + r * (np.cos(alpha_max) - 1))
+    Lp = (wd / 2 - ht / 2) / (ht / 2) * Lp_max
     beta = np.arctan2(Lp , d)
     alpha_centre = beta + np.arcsin((d/r - 1) * np.sin(beta))
     
@@ -328,3 +339,17 @@ def polecap(im, num_gores, lam_extent = mt.pi, phi_extent = mt.pi / 2, phi_cap =
     output = output.transpose(Image.FLIP_TOP_BOTTOM)
     output = output.rotate(180 - 180 / num_gores)
     return output
+
+def make_rotary(im_path, focal_length, alpha_max, num_gores, projection, alpha_limit, num_points, phi_no_cut):
+    """
+    make_rotary master function to produce a gore net stitched at the pole
+    """
+    im = openimage(im_path)
+    fundus_equi, lammax, phimax = equi(im = im, 
+                          focal_length = focal_length, alpha_max = alpha_max, numpoints = num_points)
+    fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax)
+    fundus_rotary = make(fundus_swapped, num_gores = num_gores, 
+                          projection = projection, pole_stitch = True, alpha_limit = alpha_limit)
+    fundus_cap = polecap(fundus_swapped, num_gores = num_gores, phi_cap = phi_no_cut)
+    fundus_rotary.paste(fundus_cap, (0, round(num_points / 2)), fundus_cap)
+    return fundus_rotary

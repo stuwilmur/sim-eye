@@ -1,0 +1,11 @@
+
+.DS_Store
+.ipynb_checkpoints/Example-checkpoint.ipynb
+.ipynb_checkpoints/Interface-checkpoint.ipynb
+cap.png
+fundus_gores.png
+fundus_rotary.png
+gore/.ipynb_checkpoints/gore-checkpoint.py
+gore/__pycache__/gore.cpython-37.pyc
+gore/__pycache__/gore.cpython-38.pyc
+rotary.png
