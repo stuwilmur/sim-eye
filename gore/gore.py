@@ -9,7 +9,7 @@ Created on Thu Dec  6 12:31:21 2018
 from PIL import Image
 import numpy as np
 import math as mt
-from tqdm import trange
+from tqdm.notebook import trange
 import matplotlib.pyplot as plt
 
 cot = lambda z : 1 / mt.tan(z)
