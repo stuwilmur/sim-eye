@@ -85,7 +85,7 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     rads_per_meridian = ang_wd / num_gores
     degs_per_meridian = rads_per_meridian / mt.pi * 180
     
-    tr = trange(0, ht, desc='Processing image rows', leave=True)
+    tr = trange(0, ht, desc='goring image rows', leave=True)
     for i in tr:
         for j in range(0,wd):
             
@@ -144,7 +144,7 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
                 continue
                 
             # do nothing if we have exceeded alpha_limit
-            if y > (alpha_limit - np.pi / 2):
+            if phi > (alpha_limit - np.pi / 2):
                 continue
 
             projected[inew][jnew][0:3], projected[inew][jnew][3] = im2arr[i][j][0:3], 255
@@ -211,7 +211,7 @@ def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi):
     lamo_min, lamo_max = -mt.pi, mt.pi
     sinus = np.zeros((ht, wdo, cols), dtype = "uint8")
     
-    tr = trange(0, ht, desc='Processing image rows', leave=True)
+    tr = trange(0, ht, desc='rotating image rows to pole', leave=True)
     for i in tr:
         for j in range(0,wdo):
     
@@ -262,7 +262,7 @@ def equi(im, alpha_max, focal_length = 24, numpoints = 1000):
     phis = np.linspace(phi_min, phi_max, numpoints)
     lams = np.linspace(lam_min, lam_max, numpoints)
     
-    tr = trange(len(phis) - 1, desc='Processing coordinate positions', leave=True)
+    tr = trange(len(phis) - 1, desc='calculating eye image coordinate positions', leave=True)
     for phi_i in tr:
     #for phi_i in tqdm(range(len(phis) - 1)):
         for lam_i in range(len(lams) -1):

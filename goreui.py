@@ -86,8 +86,9 @@ btn_calculate = widgets.Button(
     tooltip='Click me',
     icon='eye' # (FontAwesome names without the `fa-` prefix)
 )
+
+@out.capture(clear_output = True)
 def on_calculate(b):
-    out.clear_output()
     rotary = gore.make_rotary(im_path = './img/fundus_white.jpg', 
                  focal_length = w_focal_length.value, 
                  alpha_max = gore.deg2rad(w_alpha_max.value), 
@@ -97,8 +98,7 @@ def on_calculate(b):
                  num_points = w_num_points.value,
                  phi_no_cut = gore.deg2rad(w_phi_no_cut.value))
     
-    with out:
-        gore.fig(rotary)
+    gore.fig(rotary)
     rotary.save("rotary.png")
     
 btn_calculate.on_click(on_calculate)
