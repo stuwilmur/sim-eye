@@ -9,22 +9,9 @@ Created on Thu Apr  1 17:50:00 2021
 
 import gore
 import ipywidgets as widgets
-from os import listdir
-from os.path import isfile, join
 out = widgets.Output(layout={'border': '1px solid black'})
 
-mypath = "./img"
-imgfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-
 style = {'description_width': 'initial'}
-
-w_source_img = widgets.Dropdown(
-    options=imgfiles,
-    description='Source image:',
-    disabled=False,
-)
-display(w_source_img)
-
 w_focal_length = widgets.FloatSlider(
     value=24,
     min=5,
@@ -102,7 +89,7 @@ btn_calculate = widgets.Button(
 
 @out.capture(clear_output = True)
 def on_calculate(b):
-    rotary = gore.make_rotary(im_path = join(mypath, w_source_img.value), 
+    rotary = gore.make_rotary(im_path = './img/img1.jpg', 
                  focal_length = w_focal_length.value, 
                  alpha_max = gore.deg2rad(w_alpha_max.value), 
                  num_gores = w_num_gores.value, 

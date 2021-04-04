@@ -2,3 +2,4 @@ Pillow
 numpy
 matplotlib
 tqdm
+ipywidgets
