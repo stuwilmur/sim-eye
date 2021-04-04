@@ -11,6 +11,8 @@ import gore
 import ipywidgets as widgets
 from os import listdir
 from os.path import isfile, join
+from IPython.display import display, FileLink
+
 out = widgets.Output(layout={'border': '1px solid black'})
 
 mypath = "./img"
@@ -112,7 +114,9 @@ def on_calculate(b):
                  phi_no_cut = gore.deg2rad(w_phi_no_cut.value))
     
     gore.fig(rotary)
-    rotary.save("rotary.png")
+    rotary.save("output.png")
+    local_file = FileLink('./output.png', result_html_prefix="Click here to download: ")
+    display(local_file)
     
 btn_calculate.on_click(on_calculate)
 display(btn_calculate)
