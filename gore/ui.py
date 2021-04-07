@@ -78,7 +78,7 @@ display(w_phi_no_cut)
 
 w_num_points = widgets.IntSlider(
     min = 100,
-    max = 2000,
+    max = 4000,
     value = 1000,
     step = 100,
     description = 'Resolution',
