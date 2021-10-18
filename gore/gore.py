@@ -42,7 +42,7 @@ def deg2rad(x):
 
 def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2, 
          phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi, phi_no_cut = 0,
-         phi_cap = mt.pi / 2, pole_stitch = False, alpha_limit = mt.pi):
+         phi_cap = mt.pi / 2, pole_stitch = False, alpha_limit = mt.pi, show_progress = True):
     """
     make    returns an image that can be used as a gore net
     
@@ -58,6 +58,7 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     phi_cap:        angular size of pole cap (radians)
     pole_stitch:    if True stitches the gores at the north pole instead of the equator (bool)
     alpha_limit:    no goring beyond this angle
+    show_progress:  show progress bar (boolean)
     """
     
     # demand that the pole is included if the gores are to be stitched at the pole
@@ -85,7 +86,10 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     rads_per_meridian = ang_wd / num_gores
     degs_per_meridian = rads_per_meridian / mt.pi * 180
     
-    tr = trange(0, ht, desc='goring image rows', leave=True)
+    if (show_progress):
+        tr = trange(0, ht, desc='goring image rows', leave=True)
+    else:
+        tr = range(0, ht)
     for i in tr:
         for j in range(0,wd):
             
@@ -195,7 +199,7 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     else:
         return equator_stitched
     
-def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi):
+def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi, show_progress = True):
     """
     swap    takes an equirectangular projection of a certain angular
             extent and rotates it about the y-axis, so the poles lie 
@@ -211,7 +215,11 @@ def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi):
     lamo_min, lamo_max = -mt.pi, mt.pi
     sinus = np.zeros((ht, wdo, cols), dtype = "uint8")
     
-    tr = trange(0, ht, desc='rotating image rows to pole', leave=True)
+
+    if (show_progress):
+        tr = trange(0, ht, desc='rotating image rows to pole', leave=True)
+    else:
+        tr = range(0, ht)
     for i in tr:
         for j in range(0,wdo):
     
@@ -229,7 +237,7 @@ def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi):
     output = Image.fromarray(sinus)
     return output
 
-def equi(im, alpha_max, focal_length = 24, numpoints = 1000):
+def equi(im, alpha_max, focal_length = 24, numpoints = 1000, show_progress = True):
     """
     equi         takes a fundus image and computes its equirectangular projection
                  assuming a simple spherical eye model
@@ -262,7 +270,10 @@ def equi(im, alpha_max, focal_length = 24, numpoints = 1000):
     phis = np.linspace(phi_min, phi_max, numpoints)
     lams = np.linspace(lam_min, lam_max, numpoints)
     
-    tr = trange(len(phis) - 1, desc='calculating eye image coordinate positions', leave=True)
+    if (show_progress):
+        tr = trange(len(phis) - 1, desc='calculating eye image coordinate positions', leave=True)
+    else:
+        tr = range(len(phis) - 1)
     for phi_i in tr:
     #for phi_i in tqdm(range(len(phis) - 1)):
         for lam_i in range(len(lams) -1):
@@ -329,27 +340,27 @@ def equi_zeiss(im, alpha_max, focal_length = 24, numpoints = 1000):
     
     return (equi_lr, float(half_angle), float(alpha_max))
 
-def polecap(im, num_gores, lam_extent = mt.pi, phi_extent = mt.pi / 2, phi_cap = mt.pi / 2):
+def polecap(im, num_gores, lam_extent = mt.pi, phi_extent = mt.pi / 2, phi_cap = mt.pi / 2, show_progress = True):
     """
     polecap    produce a polar cap to paste onto a set of gores
                joined at the pole, to allow for a "no-cut" zone.
     """
-    swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent)
-    output = make(swapped, num_gores = 1, phi_cap = phi_cap, projection = "azimuthal equidistant")
+    swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent, show_progress = show_progress)
+    output = make(swapped, num_gores = 1, phi_cap = phi_cap, projection = "azimuthal equidistant", show_progress = show_progress)
     output = output.transpose(Image.FLIP_TOP_BOTTOM)
     output = output.rotate(180 - 180 / num_gores)
     return output
 
-def make_rotary(im_path, focal_length, alpha_max, num_gores, projection, alpha_limit, num_points, phi_no_cut):
+def make_rotary(im_path, focal_length, alpha_max, num_gores, projection, alpha_limit, num_points, phi_no_cut, show_progress):
     """
     make_rotary master function to produce a gore net stitched at the pole
     """
     im = openimage(im_path)
     fundus_equi, lammax, phimax = equi(im = im, 
-                          focal_length = focal_length, alpha_max = alpha_max, numpoints = num_points)
-    fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax)
+                          focal_length = focal_length, alpha_max = alpha_max, numpoints = num_points, show_progress = show_progress)
+    fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax, show_progress = show_progress)
     fundus_rotary = make(fundus_swapped, num_gores = num_gores, 
-                          projection = projection, pole_stitch = True, alpha_limit = alpha_limit)
-    fundus_cap = polecap(fundus_swapped, num_gores = num_gores, phi_cap = phi_no_cut)
+                          projection = projection, pole_stitch = True, alpha_limit = alpha_limit, show_progress = show_progress)
+    fundus_cap = polecap(fundus_swapped, num_gores = num_gores, phi_cap = phi_no_cut, show_progress = show_progress)
     fundus_rotary.paste(fundus_cap, (0, round(num_points / 2)), fundus_cap)
     return fundus_rotary

@@ -102,23 +102,44 @@ btn_calculate = widgets.Button(
     icon='eye' # (FontAwesome names without the `fa-` prefix)
 )
 
+def get_inputs():
+    inputs = dict(
+        im_path = join(mypath, w_source_img.value), 
+        focal_length = w_focal_length.value, 
+        alpha_max = gore.deg2rad(w_alpha_max.value), 
+        num_gores = w_num_gores.value, 
+        projection = w_projection.value, 
+        alpha_limit = gore.deg2rad(w_alpha_limit.value), 
+        num_points = w_num_points.value,
+        phi_no_cut = gore.deg2rad(w_phi_no_cut.value),
+        show_progress = True
+    )
+
+    return inputs;
+
 @out.capture(clear_output = True)
-def on_calculate(b):
-    rotary = gore.make_rotary(im_path = join(mypath, w_source_img.value), 
-                 focal_length = w_focal_length.value, 
-                 alpha_max = gore.deg2rad(w_alpha_max.value), 
-                 num_gores = w_num_gores.value, 
-                 projection = w_projection.value, 
-                 alpha_limit = gore.deg2rad(w_alpha_limit.value), 
-                 num_points = w_num_points.value,
-                 phi_no_cut = gore.deg2rad(w_phi_no_cut.value))
-    
+def calculate(gore_args, allow_save=False):
+    rotary = gore.make_rotary(**gore_args)
     gore.fig(rotary)
-    rotary.save("output.png")
-    local_file = FileLink('./output.png', result_html_prefix="Click here to download: ")
-    display(local_file)
-    
+
+    if (allow_save):
+        rotary.save("output.png")
+        local_file = FileLink('./output.png', result_html_prefix="Click here to download: ")
+        display(local_file)
+
+def on_calculate(b):
+    calculate(get_inputs(), allow_save = True)
+
+def on_edit_parameters(change):
+    inputs = get_inputs()
+
+    inputs['num_points'] = 50 # very low resolution preview
+    inputs['show_progress'] = False # hide progress bars
+    calculate(inputs)
+
 btn_calculate.on_click(on_calculate)
+w_num_gores.observe(on_edit_parameters)
+
 display(btn_calculate)
 display(out)
 
