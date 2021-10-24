@@ -40,11 +40,11 @@ def deg2rad(x):
     """
     return x / 180 * np.pi
 
-def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2, 
-         phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi, phi_no_cut = 0,
-         phi_cap = mt.pi / 2, pole_stitch = False, alpha_limit = mt.pi, show_progress = True):
+def make_equatorial(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2, 
+         phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi, phi_no_cut = 0, phi_cap = mt.pi / 2,
+         alpha_limit = mt.pi, show_progress = True):
     """
-    make    returns an image that can be used as a gore net
+    make_equatorial    returns an image that can be used as a gore net
     
     im:             input image opened by PIL
     num_gores:      number of gores
@@ -56,14 +56,9 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     lam_max:        maximum longitude (radians)
     phi_no_cut:     angular size of no-cut zone (radians)
     phi_cap:        angular size of pole cap (radians)
-    pole_stitch:    if True stitches the gores at the north pole instead of the equator (bool)
     alpha_limit:    no goring beyond this angle
     show_progress:  show progress bar (boolean)
     """
-    
-    # demand that the pole is included if the gores are to be stitched at the pole
-    if pole_stitch:
-        phi_min = -mt.pi / 2
     
     im2arr = np.array(im) # im2arr.shape: height x width x channel
     ht, wd, cols = im2arr.shape
@@ -78,13 +73,11 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     
     ht2, wd2 = int(ht / sample_factor), int(wd / sample_factor)
     projected = np.zeros((ht2, wd2, cols + 1), dtype = "uint8")
-    polecap = np.zeros((ht2, wd2, cols + 1), dtype = "uint8")
     
     phi0 = 0
     
     ang_wd = lam_max - lam_min    
     rads_per_meridian = ang_wd / num_gores
-    degs_per_meridian = rads_per_meridian / mt.pi * 180
     
     if (show_progress):
         tr = trange(0, ht, desc='goring image rows', leave=True)
@@ -177,27 +170,46 @@ def make(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2,
     # since we subsampled, resize to match the input image size
     equator_stitched = equator_stitched.resize(im.size, Image.CUBIC)
     
-    if pole_stitch:
-        gore_wd = wd // num_gores
-        pole_stitched = Image.new(mode = "RGBA", size = (2 * ht, 2 * ht))
+    return equator_stitched
+
+def make_polar(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2, 
+         phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi, phi_no_cut = 0,
+         phi_cap = mt.pi / 2, alpha_limit = mt.pi, show_progress = True):
+    
+    # demand that the pole is included if the gores are to be stitched at the pole
+    phi_min = -mt.pi / 2
+    
+    im2arr = np.array(im) # im2arr.shape: height x width x channel
+    ht, wd, cols = im2arr.shape
+    
+    ang_wd = lam_max - lam_min    
+    rads_per_meridian = ang_wd / num_gores
+    degs_per_meridian = rads_per_meridian / mt.pi * 180
+    
+    gore_wd = wd // num_gores
+    pole_stitched = Image.new(mode = "RGBA", size = (2 * ht, 2 * ht))
+    
+    equator_stitched = make_equatorial(im = im, num_gores = num_gores, projection = projection,
+                                       phi_min = phi_min, phi_max = phi_max, lam_min = lam_min,
+                                       lam_max = lam_max, phi_no_cut = 0, alpha_limit = alpha_limit,
+                                       show_progress = show_progress)
+    
+    for i in range(num_gores):
+        strip = equator_stitched.crop((i * gore_wd, 0, (i+1) * gore_wd, ht))
+        ht3 = int(ht * 1.5)
+        gore = Image.new(mode = "RGBA", size = (ht3, ht3))
+        left = (ht3 - gore_wd) // 2
+        gore.paste(strip, box=(left, 0))
+        gore = gore.rotate((i) * degs_per_meridian)
+        ht2 = ht3 // 2
+        omega = (i) * rads_per_meridian
+        pos_x, pos_y = ht2 * (1 + mt.sin(omega)) - (ht3 - ht), ht2 * (1 + mt.cos(omega)) - (ht3 - ht)
+        pos_x, pos_y = int(pos_x), int(pos_y)
         
-        for i in range(num_gores):
-            strip = equator_stitched.crop((i * gore_wd, 0, (i+1) * gore_wd, ht))
-            ht3 = int(ht * 1.5)
-            gore = Image.new(mode = "RGBA", size = (ht3, ht3))
-            left = (ht3 - gore_wd) // 2
-            gore.paste(strip, box=(left, 0))
-            gore = gore.rotate((i) * degs_per_meridian)
-            ht2 = ht3 // 2
-            omega = (i) * rads_per_meridian
-            pos_x, pos_y = ht2 * (1 + mt.sin(omega)) - (ht3 - ht), ht2 * (1 + mt.cos(omega)) - (ht3 - ht)
-            pos_x, pos_y = int(pos_x), int(pos_y)
-            # using the gore as a mask means that the pasted bakground is transparent
-            pole_stitched.paste(gore, (pos_x, pos_y), mask=gore)
-                        
-        return pole_stitched
-    else:
-        return equator_stitched
+        # using the gore as a mask means that the pasted bakground is transparent
+        pole_stitched.paste(gore, (pos_x, pos_y), mask=gore)
+        
+    return pole_stitched
     
 def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi, show_progress = True):
     """
@@ -346,7 +358,7 @@ def polecap(im, num_gores, lam_extent = mt.pi, phi_extent = mt.pi / 2, phi_cap =
                joined at the pole, to allow for a "no-cut" zone.
     """
     swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent, show_progress = show_progress)
-    output = make(swapped, num_gores = 1, phi_cap = phi_cap, projection = "azimuthal equidistant", show_progress = show_progress)
+    output = make_equatorial(swapped, num_gores = 1, phi_cap = phi_cap, projection = "azimuthal equidistant", show_progress = show_progress)
     output = output.transpose(Image.FLIP_TOP_BOTTOM)
     output = output.rotate(180 - 180 / num_gores)
     return output
@@ -359,8 +371,8 @@ def make_rotary(im_path, focal_length, alpha_max, num_gores, projection, alpha_l
     fundus_equi, lammax, phimax = equi(im = im, 
                           focal_length = focal_length, alpha_max = alpha_max, numpoints = num_points, show_progress = show_progress)
     fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax, show_progress = show_progress)
-    fundus_rotary = make(fundus_swapped, num_gores = num_gores, 
-                          projection = projection, pole_stitch = True, alpha_limit = alpha_limit, show_progress = show_progress)
+    fundus_rotary = make_polar(fundus_swapped, num_gores = num_gores, 
+                          projection = projection, alpha_limit = alpha_limit, show_progress = show_progress)
     fundus_cap = polecap(fundus_swapped, num_gores = num_gores, phi_cap = phi_no_cut, show_progress = show_progress)
     fundus_rotary.paste(fundus_cap, (0, round(num_points / 2)), fundus_cap)
     return fundus_rotary
