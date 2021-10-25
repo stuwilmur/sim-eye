@@ -133,7 +133,7 @@ def make_equatorial(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi /
             else:
                 x, y =  lam, phi #equirectangular
 
-            inew, jnew = (y - phi_min) / (phi_max - phi_min) * ht2,  (x - lam_min) / ang_wd * wd2, 
+            inew, jnew = (y - phi_min) / (phi_max - phi_min) * ht2,  (x - lam_min) / ang_wd * wd2 
             inew, jnew = round(inew), round(jnew)
 
             # do nothing if we have gone off the edge
@@ -148,22 +148,22 @@ def make_equatorial(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi /
             
     # now project the the no-cut zone
     for i in range(0,ht):
-            for j in range(0,wd):
+        for j in range(0,wd):
 
-                phi = phi_min + (phi_max - phi_min) * i / ht
-                lam = lam_min + ang_wd * j / wd
+            phi = phi_min + (phi_max - phi_min) * i / ht
+            lam = lam_min + ang_wd * j / wd
 
-                if abs(phi) <= phi_no_cut:
-                    x, y = lam, mt.sin(phi) # Lambert cylindrical equal-area projection in the no-cut strip
+            if abs(phi) <= phi_no_cut:
+                x, y = lam, mt.sin(phi) # Lambert cylindrical equal-area projection in the no-cut strip
 
-                    inew, jnew = (y - phi_min) / (phi_max - phi_min) * ht2,  (x - lam_min) / ang_wd * wd2, 
-                    inew, jnew = round(inew), round(jnew)
+                inew, jnew = (y - phi_min) / (phi_max - phi_min) * ht2,  (x - lam_min) / ang_wd * wd2
+                inew, jnew = round(inew), round(jnew)
 
-                    # do nothing if we have gone off the edge
-                    if jnew < 0 or jnew >= wd2 or inew < 0 or inew >= ht2:
-                        continue
+                # do nothing if we have gone off the edge
+                if jnew < 0 or jnew >= wd2 or inew < 0 or inew >= ht2:
+                    continue
 
-                    projected[inew][jnew][0:3], projected[inew][jnew][3] = im2arr[i][j][0:3], 255
+                projected[inew][jnew][0:3], projected[inew][jnew][3] = im2arr[i][j][0:3], 255
 
     equator_stitched = Image.fromarray(projected, mode="RGBA")
     
@@ -173,14 +173,14 @@ def make_equatorial(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi /
     return equator_stitched
 
 def make_polar(im, num_gores, projection = "sinusoidal", phi_min = -mt.pi / 2, 
-         phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi, phi_no_cut = 0,
-         phi_cap = mt.pi / 2, alpha_limit = mt.pi, show_progress = True):
+         phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi, alpha_limit = mt.pi,
+         show_progress = True):
     
     # demand that the pole is included if the gores are to be stitched at the pole
     phi_min = -mt.pi / 2
     
     im2arr = np.array(im) # im2arr.shape: height x width x channel
-    ht, wd, cols = im2arr.shape
+    ht, wd = im2arr.shape[0:2]
     
     ang_wd = lam_max - lam_min    
     rads_per_meridian = ang_wd / num_gores
@@ -238,7 +238,7 @@ def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi, show_progress = True):
             phi, lam, = phio_min + (phio_max - phio_min) * i / ht, lamo_min + (lamo_max - lamo_min) * j / wdo
             x, y = mt.atan2(mt.sin(lam) * mt.cos(phi), mt.sin(phi)), mt.asin(-mt.cos(lam) * mt.cos(phi))
     
-            isamp, jsamp = (y - phii_min) / (phii_max - phii_min) * ht,  (x - lami_min) / (lami_max - lami_min) * wd, 
+            isamp, jsamp = (y - phii_min) / (phii_max - phii_min) * ht,  (x - lami_min) / (lami_max - lami_min) * wd 
             isamp, jsamp = round(isamp), round(jsamp)
     
             if jsamp < 0 or jsamp >= wd or isamp < 0 or isamp >= ht:
@@ -264,7 +264,7 @@ def equi(im, alpha_max, focal_length = 24, numpoints = 1000, show_progress = Tru
     """
     
     fundus = np.array(im)
-    ht,wd,ch = fundus.shape
+    ht,wd = fundus.shape[0:2]
     
     d = focal_length
     r = 12
@@ -278,7 +278,7 @@ def equi(im, alpha_max, focal_length = 24, numpoints = 1000, show_progress = Tru
     # set sampling
     fundus = np.array(fundus)
     fundus2 = np.array(fundus)
-    equi = np.zeros((numpoints, numpoints, 3), dtype = "uint8")
+    equi_arr = np.zeros((numpoints, numpoints, 3), dtype = "uint8")
     phis = np.linspace(phi_min, phi_max, numpoints)
     lams = np.linspace(lam_min, lam_max, numpoints)
     
@@ -301,12 +301,12 @@ def equi(im, alpha_max, focal_length = 24, numpoints = 1000, show_progress = Tru
             
             i, j = int(i), int(j)
             
-            equi[phi_i][lam_i][:] = fundus[i][j][:] 
+            equi_arr[phi_i][lam_i][:] = fundus[i][j][:] 
             
             # mark where the image has been sampled for inspection
             fundus2[i][j][:] = fundus[i][j][:] * 0         
             
-    equi_image = Image.fromarray(equi, mode="RGB")
+    equi_image = Image.fromarray(equi_arr, mode="RGB")
     return (equi_image, float(lam_max), float(phi_max))
     
 def equi_zeiss(im, alpha_max, focal_length = 24, numpoints = 1000):
@@ -326,9 +326,9 @@ def equi_zeiss(im, alpha_max, focal_length = 24, numpoints = 1000):
 
     wd, ht = im.size
     im_l = im.crop((0,0,ht, ht))
-    equi_l, lm, pm = equi(im_l, alpha_max, focal_length, numpoints)
+    equi_l, _lm, _pm = equi(im_l, alpha_max, focal_length, numpoints)
     im_r = im.crop((wd - ht + 1, 0, wd, ht))
-    equi_r, lm, pm = equi(im_r, alpha_max, focal_length, numpoints)
+    equi_r, _lm, _pm = equi(im_r, alpha_max, focal_length, numpoints)
     
     d = focal_length
     r = 12
