@@ -9,7 +9,6 @@ Created on Thu Dec  6 12:31:21 2018
 from PIL import Image
 import numpy as np
 import math as mt
-from tqdm.notebook import trange
 import matplotlib.pyplot as plt
 import cv2
 
@@ -49,12 +48,18 @@ def rad2deg(x):
     """
     return x / np.pi * 180
 
+def nd2im(arr):
+    """
+    nd2dim:     retun a PIL.Image from an ndarray
+    """
+    return Image.fromarray(arr)
+
 def make_equatorial(im, num_gores, phi_min = -mt.pi / 2, 
          phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi):
     """
     make_equatorial    returns an image that can be used as a gore net
     
-    im:             input image opened by PIL
+    im:             input image (ndarray)
     num_gores:      number of gores
     phi_min:        minimum latitude (radians)    
     phi_max:        maximum latitude (radians)
@@ -79,7 +84,9 @@ def make_equatorial(im, num_gores, phi_min = -mt.pi / 2,
     phi_src = phi_dst
     y_src = (phi_src - phi_min) * h / (phi_max - phi_min)
     x_src = (lam_src - lam_min) * w / (lam_max - lam_min)
-    dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR)
+    transparent_img = np.zeros((h, w, 4), dtype=np.uint8)
+    bgra = cv2.cvtColor(im, cv2.COLOR_BGR2BGRA)
+    dst = cv2.remap(bgra, x_src, y_src, cv2.INTER_LINEAR, transparent_img)
     return(dst)
     
 
@@ -89,7 +96,7 @@ def make_polar(im, num_gores, phi_min = -mt.pi / 2,
     # demand that the pole is included if the gores are to be stitched at the pole
     phi_min = -mt.pi / 2
     
-    ht, wd = im.shape[0:2]
+    ht, wd = im.shape[:2]
     
     ang_wd = lam_max - lam_min    
     rads_per_meridian = ang_wd / num_gores
@@ -98,9 +105,11 @@ def make_polar(im, num_gores, phi_min = -mt.pi / 2,
     gore_wd = wd // num_gores
     pole_stitched = Image.new(mode = "RGBA", size = (2 * ht, 2 * ht))
     
-    equator_stitched = make_equatorial(im = im, num_gores = num_gores,
-                                       phi_min = phi_min, phi_max = phi_max, lam_min = lam_min,
-                                       lam_max = lam_max)
+    equator_stitched_arr = make_equatorial(im = im, num_gores = num_gores,
+                                           phi_min = phi_min, phi_max = phi_max, lam_min = lam_min,
+                                           lam_max = lam_max)
+    
+    equator_stitched = nd2im(equator_stitched_arr)
     
     for i in range(num_gores):
         strip = equator_stitched.crop((i * gore_wd, 0, (i+1) * gore_wd, ht))
@@ -134,7 +143,7 @@ def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi):
     phi_src = np.arctan2(np.sin(lam_dst) * np.cos(phi_dst),-np.sin(phi_dst))
     y_src = (phi_src - phi_src_min) * h / (phi_src_max - phi_src_min)
     x_src = (lam_src - lam_src_min) * w / (lam_src_max - lam_src_min)
-    dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR)
+    dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR, cv2.BORDER_TRANSPARENT)
     return dst
 
 def equi(im, alpha_max, focal_length = 24):
@@ -142,7 +151,7 @@ def equi(im, alpha_max, focal_length = 24):
     equi         takes a fundus image and computes its equirectangular projection
                  assuming a simple spherical eye model
 
-    im           input image (image)
+    im           input image (ndarray)
             
     alpha_max    angular size of the image from the centre (radians)
             
@@ -172,7 +181,7 @@ def equi(im, alpha_max, focal_length = 24):
     x = np.floor(Lp_x / Lp_max * ht / 2 + ht / 2)
     y = np.floor(Lp_y / Lp_max * wd / 2 + wd / 2)
             
-    equi_image = cv2.remap(im, x, y, cv2.INTER_LINEAR) 
+    equi_image = cv2.remap(im, x, y, cv2.INTER_LINEAR, cv2.BORDER_TRANSPARENT) 
             
     return (equi_image, float(lam_max), float(phi_max))
 
