@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-gore
+gore2
 
-Created on Thu Dec  6 12:31:21 2018
+Created on Wed Nov  3 19:21:00 2021
 
 @author: swm
 """
@@ -12,9 +12,19 @@ import math as mt
 import matplotlib.pyplot as plt
 import cv2
 
+"""
+basic trigonometric functions
+"""
 cot = lambda z : 1 / mt.tan(z)
 cosec = lambda z : 1 / mt.sin(z)
 sec = lambda z : 1 / mt.cos(z)
+
+"""
+constants: projection options
+"""
+SINUSOIDAL = 0
+CASSINI = 1
+ORTHOGRAPHIC = 2
 
 def fig(img):
     """
@@ -25,12 +35,17 @@ def fig(img):
     plt.figure(figsize = (10,10))
     plt.imshow(img)
     plt.show()
-
-def openimage(f):
+    
+def image_from_path(path):
     """
-    openimage    returns an image given a file path
+    image_from_path:    open an image as a numpy ndarray
+    
+    path:               path to image
     """
-    return Image.open(f).convert('RGB')
+    im = cv2.imread(path)
+    imRgb = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+    
+    return imRgb
 
 def deg2rad(x):
     """
@@ -52,10 +67,15 @@ def nd2im(arr):
     """
     nd2dim:     retun a PIL.Image from an ndarray
     """
-    return Image.fromarray(arr)
+    return Image.fromarray(arr, mode="RGBA")
 
-def make_equatorial(im, num_gores, phi_min = -mt.pi / 2, 
-         phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi):
+def make_equatorial(im,
+                    num_gores, 
+                    phi_min = -mt.pi / 2, 
+                    phi_max = mt.pi / 2, 
+                    lam_min = -mt.pi, 
+                    lam_max = mt.pi,
+                    projection = SINUSOIDAL):
     """
     make_equatorial    returns an image that can be used as a gore net
     
@@ -68,7 +88,6 @@ def make_equatorial(im, num_gores, phi_min = -mt.pi / 2,
     phi_no_cut:     angular size of no-cut zone (radians)
     phi_cap:        angular size of pole cap (radians)
     alpha_limit:    no goring beyond this angle
-    show_progress:  show progress bar (boolean)
     """
     
     h, w = im.shape[:2]
@@ -78,20 +97,39 @@ def make_equatorial(im, num_gores, phi_min = -mt.pi / 2,
     gore_width = (lam_max - lam_min) / num_gores
     lam00 = (indx // (w / num_gores)) * gore_width + gore_width / 2 + lam_min
     lam0 = np.tile(lam00, (h,1))
-    lam_src = ((lam_dst - lam0) / np.cos(phi_dst)) + lam0
+    
+    if projection == SINUSOIDAL:
+        lam_src = ((lam_dst - lam0) / np.cos(phi_dst)) + lam0
+        phi_src = phi_dst
+    elif projection == ORTHOGRAPHIC:
+        x = (lam_dst - lam0)
+        y = phi_dst
+        rho = np.sqrt(np.square(x) + np.square(y))
+        c = np.arcsin(rho)
+        phi_src = np.arcsin(y * np.sin(c) / rho)
+        lam_src = lam0 + np.arctan2(x * np.sin(c), rho * np.cos(c))
+    else: # Cassini
+        lam_src = lam0 + np.arctan2(np.tan(lam_dst-lam0),np.cos(phi_dst))
+        phi_src = np.arcsin(np.sin(phi_dst) * np.cos(lam_dst-lam0))
+    
     lam_src = lam_src + np.array(np.greater(lam_src, lam0 + gore_width / 2) * 1000, dtype = np.float32)
     lam_src = lam_src + np.array(np.less(lam_src, lam0 - gore_width / 2) * -1000, dtype = np.float32)
-    phi_src = phi_dst
+    
     y_src = (phi_src - phi_min) * h / (phi_max - phi_min)
     x_src = (lam_src - lam_min) * w / (lam_max - lam_min)
     transparent_img = np.zeros((h, w, 4), dtype=np.uint8)
-    bgra = cv2.cvtColor(im, cv2.COLOR_BGR2BGRA)
+    bgra = cv2.cvtColor(im, cv2.COLOR_RGB2RGBA)
     dst = cv2.remap(bgra, x_src, y_src, cv2.INTER_LINEAR, transparent_img)
     return(dst)
     
 
-def make_polar(im, num_gores, phi_min = -mt.pi / 2, 
-         phi_max = mt.pi / 2, lam_min = -mt.pi, lam_max = mt.pi):
+def make_polar(im, 
+               num_gores, 
+               phi_min = -mt.pi / 2, 
+               phi_max = mt.pi / 2, 
+               lam_min = -mt.pi, 
+               lam_max = mt.pi,
+               projection = SINUSOIDAL):
     
     # demand that the pole is included if the gores are to be stitched at the pole
     phi_min = -mt.pi / 2
@@ -107,7 +145,7 @@ def make_polar(im, num_gores, phi_min = -mt.pi / 2,
     
     equator_stitched_arr = make_equatorial(im = im, num_gores = num_gores,
                                            phi_min = phi_min, phi_max = phi_max, lam_min = lam_min,
-                                           lam_max = lam_max)
+                                           lam_max = lam_max, projection = projection)
     
     equator_stitched = nd2im(equator_stitched_arr)
     
@@ -128,25 +166,29 @@ def make_polar(im, num_gores, phi_min = -mt.pi / 2,
         
     return pole_stitched
     
-def swap(im, phi_extent = mt.pi / 2, lam_extent = mt.pi):
+def swap(im, 
+         phi_extent = mt.pi / 2, 
+         lam_extent = mt.pi):
     """
     swap    takes an equirectangular projection of a certain angular
             extent and rotates it about the y-axis, so the poles lie 
             at the equator and the equator becomes a meridian.
     """
     h, w = im.shape[:2]
-    phi_dst_min, phi_dst_max, lam_dst_min, lam_dst_max = -np.pi / 2, np.pi / 2, -np.pi, np.pi
+    phi_dst_min, phi_dst_max, lam_dst_min, lam_dst_max = -np.pi / 2, np.pi / 2, 0, 2 * np.pi
     phi_src_min, phi_src_max, lam_src_min, lam_src_max = -phi_extent, phi_extent, -lam_extent, lam_extent
     phi_vector, lam_vector = np.linspace(phi_dst_min, phi_dst_max, h, dtype = np.float32), np.linspace(lam_dst_min, lam_dst_max, w, dtype = np.float32)
     lam_dst, phi_dst = np.meshgrid(lam_vector, phi_vector)
-    lam_src = np.arcsin(np.cos(lam_dst) * np.cos(phi_dst))
-    phi_src = np.arctan2(np.sin(lam_dst) * np.cos(phi_dst),-np.sin(phi_dst))
+    phi_src = np.arcsin(np.cos(lam_dst) * np.cos(phi_dst))
+    lam_src = np.arctan2(np.sin(lam_dst) * np.cos(phi_dst),-np.sin(phi_dst))
     y_src = (phi_src - phi_src_min) * h / (phi_src_max - phi_src_min)
     x_src = (lam_src - lam_src_min) * w / (lam_src_max - lam_src_min)
     dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR, cv2.BORDER_TRANSPARENT)
     return dst
 
-def equi(im, alpha_max, focal_length = 24):
+def equi(im, 
+         alpha_max, 
+         focal_length = 24):
     """
     equi         takes a fundus image and computes its equirectangular projection
                  assuming a simple spherical eye model
@@ -185,27 +227,38 @@ def equi(im, alpha_max, focal_length = 24):
             
     return (equi_image, float(lam_max), float(phi_max))
 
-def polecap(im, num_gores, lam_extent = mt.pi, phi_extent = mt.pi / 2, phi_cap = mt.pi / 2, show_progress = True):
+def polecap(im, 
+            num_gores, 
+            lam_extent = mt.pi, 
+            phi_extent = mt.pi / 2, 
+            phi_cap = mt.pi / 2):
     """
     polecap    produce a polar cap to paste onto a set of gores
                joined at the pole, to allow for a "no-cut" zone.
     """
-    swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent, show_progress = show_progress)
-    output = make_equatorial(swapped, num_gores = 1, phi_cap = phi_cap, projection = "azimuthal equidistant", show_progress = show_progress)
-    output = output.transpose(Image.FLIP_TOP_BOTTOM)
-    output = output.rotate(180 - 180 / num_gores)
-    return output
+    swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent)
+    output  = make_equatorial(swapped, num_gores = 1, projection = ORTHOGRAPHIC)
+    polecap = nd2im(output)
+    polecap = polecap.transpose(Image.FLIP_TOP_BOTTOM)
+    polecap = polecap.rotate(180 - 180 / num_gores)
+    return polecap
 
-def make_rotary(im_path, focal_length, alpha_max, num_gores, projection, alpha_limit, num_points, phi_no_cut, show_progress):
+def make_rotary(im, 
+                focal_length, 
+                alpha_max, 
+                num_gores, 
+                projection, 
+                alpha_limit, 
+                num_points, 
+                phi_no_cut):
     """
-    make_rotary master function to produce a gore net stitched at the pole
+    make_rotary     master function to produce a gore net stitched at the pole
     """
-    im = openimage(im_path)
     fundus_equi, lammax, phimax = equi(im = im, 
                           focal_length = focal_length, alpha_max = alpha_max)
     fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax)
     fundus_rotary = make_polar(fundus_swapped, num_gores = num_gores, 
-                          projection = projection, alpha_limit = alpha_limit, show_progress = show_progress)
-    fundus_cap = polecap(fundus_swapped, num_gores = num_gores, phi_cap = phi_no_cut, show_progress = show_progress)
+                          projection = projection, alpha_limit = alpha_limit)
+    fundus_cap = polecap(fundus_swapped, num_gores = num_gores, phi_cap = phi_no_cut)
     fundus_rotary.paste(fundus_cap, (0, round(num_points / 2)), fundus_cap)
     return fundus_rotary
