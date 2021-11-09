@@ -75,6 +75,7 @@ def make_equatorial(im,
                     phi_max = mt.pi / 2, 
                     lam_min = -mt.pi, 
                     lam_max = mt.pi,
+                    phi_cap = mt.pi / 2,
                     projection = SINUSOIDAL):
     """
     make_equatorial    returns an image that can be used as a gore net
@@ -108,6 +109,9 @@ def make_equatorial(im,
         c = np.arcsin(rho)
         phi_src = np.arcsin(y * np.sin(c) / rho)
         lam_src = lam0 + np.arctan2(x * np.sin(c), rho * np.cos(c))
+        rho_max = np.array(np.greater(rho, phi_cap) * 100, dtype = np.float32)
+        phi_src += rho_max
+        lam_src += rho_max
     else: # Cassini
         lam_src = lam0 + np.arctan2(np.tan(lam_dst-lam0),np.cos(phi_dst))
         phi_src = np.arcsin(np.sin(phi_dst) * np.cos(lam_dst-lam0))
@@ -237,7 +241,7 @@ def polecap(im,
                joined at the pole, to allow for a "no-cut" zone.
     """
     swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent)
-    output  = make_equatorial(swapped, num_gores = 1, projection = ORTHOGRAPHIC)
+    output  = make_equatorial(swapped, num_gores = 1, phi_cap = phi_cap, projection = ORTHOGRAPHIC)
     polecap = nd2im(output)
     polecap = polecap.transpose(Image.FLIP_TOP_BOTTOM)
     polecap = polecap.rotate(180 - 180 / num_gores)
