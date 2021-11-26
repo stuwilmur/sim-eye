@@ -28,9 +28,11 @@ ORTHOGRAPHIC = 2
 
 def fig(img):
     """
-    fig:    display a figure given an image
+    fig:        display a figure given an image
     
-    img:    image object
+    img:        image object
+    
+    returns:    NULL
     """
     plt.figure(figsize = (10,10))
     plt.imshow(img)
@@ -40,7 +42,9 @@ def image_from_path(path):
     """
     image_from_path:    open an image as a numpy ndarray
     
-    path:               path to image
+    path:               path to image (string)
+    
+    returns             PIL.Image
     """
     im = cv2.imread(path)
     imRgb = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
@@ -51,7 +55,9 @@ def deg2rad(x):
     """
     deg2rad:    return an angle give in degrees in radians
 
-    x:          angle in degrees
+    x:          angle (degrees)
+    
+    returns:    angle (radians)
     """
     return x / 180 * np.pi
 
@@ -59,17 +65,23 @@ def rad2deg(x):
     """
     rad2deg:    return an angle give in radians in degrees
 
-    x:          angle in radians
+    x:          angle (radians)
+    
+    returns:    angle (degrees)
     """
     return x / np.pi * 180
 
 def nd2im(arr):
     """
     nd2dim:     retun a PIL.Image from an ndarray
+    
+    arr:        image array (ndarray)
+    
+    returns     image (PIL.Image)
     """
     return Image.fromarray(arr, mode="RGBA")
 
-def make_equatorial(im,
+def make_equatorial (im,
                     num_gores, 
                     phi_min = -mt.pi / 2, 
                     phi_max = mt.pi / 2, 
@@ -78,17 +90,19 @@ def make_equatorial(im,
                     phi_cap = mt.pi / 2,
                     projection = SINUSOIDAL):
     """
-    make_equatorial    returns an image that can be used as a gore net
+    make_equatorial returns an image that can be used as a gore net
     
     im:             input image (ndarray)
-    num_gores:      number of gores
+    num_gores:      number of gores (integer)
     phi_min:        minimum latitude (radians)    
     phi_max:        maximum latitude (radians)
     lam_min:        minimum longitude (radians)    
     lam_max:        maximum longitude (radians)
     phi_no_cut:     angular size of no-cut zone (radians)
     phi_cap:        angular size of pole cap (radians)
-    alpha_limit:    no goring beyond this angle
+    alpha_limit:    no goring beyond this angle (radians)
+    
+    returns:        image (ndarray)  
     """
     
     h, w = im.shape[:2]
@@ -127,7 +141,7 @@ def make_equatorial(im,
     return(dst)
     
 
-def make_polar(im, 
+def make_polar (im, 
                num_gores, 
                phi_min = -mt.pi / 2, 
                phi_max = mt.pi / 2, 
@@ -170,13 +184,19 @@ def make_polar(im,
         
     return pole_stitched
     
-def swap(im, 
+def swap (im, 
          phi_extent = mt.pi / 2, 
          lam_extent = mt.pi):
     """
     swap    takes an equirectangular projection of a certain angular
             extent and rotates it about the y-axis, so the poles lie 
             at the equator and the equator becomes a meridian.
+            
+    im:         input image (ndarray)
+    phi_extent: latitudnal extent (float)
+    lam_extent: longitudnal extent (float)
+    
+    returns:    output image (ndarray)
     """
     h, w = im.shape[:2]
     phi_dst_min, phi_dst_max, lam_dst_min, lam_dst_max = -np.pi / 2, np.pi / 2, 0, 2 * np.pi
@@ -202,6 +222,12 @@ def equi(im,
     alpha_max    angular size of the image from the centre (radians)
             
     focal length default assumes a focal length of one eye diameter (mm)
+    
+    returns:     (
+                  output image (ndarray), 
+                  lambda max (float), 
+                  phi max (float)
+                  )
     
     """
     
@@ -231,7 +257,7 @@ def equi(im,
             
     return (equi_image, float(lam_max), float(phi_max))
 
-def polecap(im, 
+def polecap (im, 
             num_gores, 
             lam_extent = mt.pi, 
             phi_extent = mt.pi / 2, 
@@ -239,30 +265,47 @@ def polecap(im,
     """
     polecap    produce a polar cap to paste onto a set of gores
                joined at the pole, to allow for a "no-cut" zone.
+               
+    im:        input image (ndarray)
+    num_gores  number of gores (integer)
+    lam_extent latitudnal extent (float)
+    phi_extent longitudnal extent (float)
+    phi_cap    angular extent of the cap to create
+    
+    returns:   output image (PIL.Image)
     """
     swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent)
     output  = make_equatorial(swapped, num_gores = 1, phi_cap = phi_cap, projection = ORTHOGRAPHIC)
     polecap = nd2im(output)
-    polecap = polecap.transpose(Image.FLIP_TOP_BOTTOM)
-    polecap = polecap.rotate(180 - 180 / num_gores)
+    polecap = polecap.rotate(- 180 / num_gores)
     return polecap
 
-def make_rotary(im, 
+def make_rotary (im, 
                 focal_length, 
                 alpha_max, 
                 num_gores, 
-                projection, 
-                alpha_limit, 
-                num_points, 
+                projection,  
                 phi_no_cut):
     """
     make_rotary     master function to produce a gore net stitched at the pole
+    
+    im:              input image (PIL.Image)
+    focal_length:    focal length (mm)
+    alpha_max:       angular size of the image from the centre (radians)
+    num_gores:       number of gores (integer)
+    projection:      projection to use (constant)
+    phi_no_cut:      angle of "no-cut zone" (radians)
     """
     fundus_equi, lammax, phimax = equi(im = im, 
                           focal_length = focal_length, alpha_max = alpha_max)
     fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax)
-    fundus_rotary = make_polar(fundus_swapped, num_gores = num_gores, 
-                          projection = projection, alpha_limit = alpha_limit)
-    fundus_cap = polecap(fundus_swapped, num_gores = num_gores, phi_cap = phi_no_cut)
-    fundus_rotary.paste(fundus_cap, (0, round(num_points / 2)), fundus_cap)
+    swapped_height, swapped_width = fundus_swapped.shape[:2]
+    fundus_swapped_resized = cv2.resize(fundus_swapped, (swapped_width * 2, swapped_height)) 
+    fundus_rotary = make_polar(fundus_swapped_resized, num_gores = num_gores, 
+                          projection = projection)
+    fundus_cap = polecap(fundus_swapped_resized, num_gores = num_gores, phi_cap = phi_no_cut)
+    vertical_offset = round((fundus_rotary.height - fundus_cap.height) / 2)
+    horizontal_offset = round((fundus_rotary.width - fundus_cap.width) / 2)
+    fundus_rotary.paste(fundus_cap, (horizontal_offset, vertical_offset), fundus_cap)
+    
     return fundus_rotary
