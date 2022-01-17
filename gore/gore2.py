@@ -70,6 +70,23 @@ def rotate_image(image, rotate_angle):
     return ndimage.rotate(image, rotate_angle)
 
 
+def deres_image(image, factor):
+    """
+    image:            the image (ndarray)
+    
+    factor:           factor by which to resize (float)
+    """
+    
+    # get image sizes
+    height, width = image.shape[:2]
+    
+    down_points = (round(factor * height), round(factor * width))
+    
+    resized_down = cv2.resize(image, down_points, interpolation= cv2.INTER_LINEAR)
+    
+    return resized_down
+
+
 def deg2rad(x):
     """
     deg2rad:    return an angle give in degrees in radians

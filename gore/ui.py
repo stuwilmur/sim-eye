@@ -104,7 +104,7 @@ w_phi_no_cut = widgets.IntSlider(
     min = 0,
     max = 90,
     value = 10,
-    step = 5,
+    step = 1,
     description = "Angle of no-cut area",
     style=style)
 display(w_phi_no_cut)
@@ -117,6 +117,15 @@ w_angle = widgets.IntSlider(
     description = "Angle to rotate image",
     style=style)
 display(w_angle)
+
+w_quality = widgets.IntSlider(
+    min = 10,
+    max = 100,
+    value = 20,
+    step = 5,
+    description = "Quality (%)",
+    style=style)
+display(w_quality)
 
 w_projection = widgets.Dropdown(
     options=["sinusoidal", "cassini", "american polyconic", 
@@ -138,6 +147,7 @@ btn_calculate = widgets.Button(
 def get_inputs():
     im_path = join(mypath, w_source_img.value)
     im = gore2.image_from_path(im_path)
+    im = gore2.deres_image(im, float(w_quality.value / 100))
     if (w_angle.value > 0):
         im = gore2.rotate_image(im, w_angle.value)
     inputs = dict(
