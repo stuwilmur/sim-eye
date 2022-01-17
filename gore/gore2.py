@@ -355,7 +355,7 @@ def make_rotary (im,
                 projection,  
                 phi_no_cut):
     """
-    make_rotary     master function to produce a gore net stitched at the pole
+    make_rotary      master function to produce a gore net stitched at the pole
     
     im:              input image (PIL.Image)
     focal_length:    focal length (mm)

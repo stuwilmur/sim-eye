@@ -7,11 +7,44 @@ Created on Thu Apr  1 17:50:00 2021
 @author: swm
 """
 
-import gore
+import gore2
 import ipywidgets as widgets
 from os import listdir
 from os.path import isfile, join
 from IPython.display import display, FileLink
+import asyncio
+
+class Timer:
+    def __init__(self, timeout, callback):
+        self._timeout = timeout
+        self._callback = callback
+
+    async def _job(self):
+        await asyncio.sleep(self._timeout)
+        self._callback()
+
+    def start(self):
+        self._task = asyncio.ensure_future(self._job())
+
+    def cancel(self):
+        self._task.cancel()
+
+def debounce(wait):
+    """ Decorator that will postpone a function's
+        execution until after `wait` seconds
+        have elapsed since the last time it was invoked. """
+    def decorator(fn):
+        timer = None
+        def debounced(*args, **kwargs):
+            nonlocal timer
+            def call_it():
+                fn(*args, **kwargs)
+            if timer is not None:
+                timer.cancel()
+            timer = Timer(wait, call_it)
+            timer.start()
+        return debounced
+    return decorator
 
 out = widgets.Output(layout={'border': '1px solid black'})
 
@@ -76,15 +109,6 @@ w_phi_no_cut = widgets.IntSlider(
     style=style)
 display(w_phi_no_cut)
 
-w_num_points = widgets.IntSlider(
-    min = 100,
-    max = 4000,
-    value = 1000,
-    step = 100,
-    description = 'Resolution',
-    style = style)
-display(w_num_points)
-
 w_projection = widgets.Dropdown(
     options=["sinusoidal", "cassini", "american polyconic", 
              "rectanguar polyconic", "transverse mercator"],
@@ -103,24 +127,22 @@ btn_calculate = widgets.Button(
 )
 
 def get_inputs():
+    im_path = join(mypath, w_source_img.value)
     inputs = dict(
-        im_path = join(mypath, w_source_img.value), 
-        focal_length = w_focal_length.value, 
-        alpha_max = gore.deg2rad(w_alpha_max.value), 
-        num_gores = w_num_gores.value, 
-        projection = w_projection.value, 
-        alpha_limit = gore.deg2rad(w_alpha_limit.value), 
-        num_points = w_num_points.value,
-        phi_no_cut = gore.deg2rad(w_phi_no_cut.value),
-        show_progress = True
+    im = gore2.image_from_path(im_path), 
+    focal_length = w_focal_length.value, 
+    alpha_max = gore2.deg2rad(w_alpha_max.value), 
+    num_gores = w_num_gores.value, 
+    projection = w_projection.value,
+    phi_no_cut = gore2.deg2rad(w_phi_no_cut.value),
     )
 
     return inputs;
 
 @out.capture(clear_output = True)
 def calculate(gore_args, allow_save=False):
-    rotary = gore.make_rotary(**gore_args)
-    gore.fig(rotary)
+    rotary = gore2.make_rotary(**gore_args)
+    gore2.fig(rotary)
 
     if (allow_save):
         rotary.save("output.png")
@@ -130,11 +152,9 @@ def calculate(gore_args, allow_save=False):
 def on_calculate(b):
     calculate(get_inputs(), allow_save = True)
 
+@debounce(2)
 def on_edit_parameters(change):
     inputs = get_inputs()
-
-    inputs['num_points'] = 50 # very low resolution preview
-    inputs['show_progress'] = False # hide progress bars
     calculate(inputs)
 
 btn_calculate.on_click(on_calculate)
