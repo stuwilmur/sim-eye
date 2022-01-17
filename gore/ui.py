@@ -109,6 +109,15 @@ w_phi_no_cut = widgets.IntSlider(
     style=style)
 display(w_phi_no_cut)
 
+w_angle = widgets.IntSlider(
+    min = 0,
+    max = 360,
+    value = 0,
+    step = 1,
+    description = "Angle to rotate image",
+    style=style)
+display(w_angle)
+
 w_projection = widgets.Dropdown(
     options=["sinusoidal", "cassini", "american polyconic", 
              "rectanguar polyconic", "transverse mercator"],
@@ -128,8 +137,11 @@ btn_calculate = widgets.Button(
 
 def get_inputs():
     im_path = join(mypath, w_source_img.value)
+    im = gore2.image_from_path(im_path)
+    if (w_angle.value > 0):
+        im = gore2.rotate_image(im, w_angle.value)
     inputs = dict(
-    im = gore2.image_from_path(im_path), 
+    im = im, 
     focal_length = w_focal_length.value, 
     alpha_max = gore2.deg2rad(w_alpha_max.value), 
     num_gores = w_num_gores.value, 

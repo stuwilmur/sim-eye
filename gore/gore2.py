@@ -11,6 +11,7 @@ import numpy as np
 import math as mt
 import matplotlib.pyplot as plt
 import cv2
+from scipy import ndimage
 
 
 """
@@ -48,7 +49,7 @@ def image_from_path(path):
     
     path:               path to image (string)
     
-    returns             PIL.Image
+    returns             image array (ndarray)
     """
     
     # read the image
@@ -58,6 +59,15 @@ def image_from_path(path):
     imRgb = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
     
     return imRgb
+
+def rotate_image(image, rotate_angle):
+    """
+    image:           the image (ndarray)
+    
+    rotate_angle:    angle of rotation (degrees)
+    """
+    
+    return ndimage.rotate(image, rotate_angle)
 
 
 def deg2rad(x):
