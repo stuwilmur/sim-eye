@@ -13,6 +13,9 @@ from os import listdir
 from os.path import isfile, join
 from IPython.display import display, FileLink
 import asyncio
+import io
+from PIL import Image
+import numpy
 
 class Timer:
     def __init__(self, timeout, callback):
@@ -49,7 +52,9 @@ def debounce(wait):
 out = widgets.Output(layout={'border': '1px solid black'})
 
 mypath = "./img"
+use_upload_text = "Use uploaded file"
 imgfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+imgfiles.append(use_upload_text)
 
 style = {'description_width': 'initial'}
 layout = widgets.Layout(width='500px', height='40px') #set width and height
@@ -60,6 +65,9 @@ w_source_img = widgets.Dropdown(
     disabled=False,
 )
 display(w_source_img)
+
+w_file_upload = widgets.FileUpload()
+display(w_file_upload)
 
 w_focal_length = widgets.FloatSlider(
     value=24,
@@ -155,8 +163,14 @@ btn_calculate = widgets.Button(
 )
 
 def get_inputs():
-    im_path = join(mypath, w_source_img.value)
-    im = gore2.image_from_path(im_path)
+    if (w_source_img.value == use_upload_text):
+        for name, file_info in w_file_upload.value.items():
+            pil_image = Image.open(io.BytesIO(file_info['content']))
+        im = numpy.array(pil_image) 
+    else:
+        im_path = join(mypath, w_source_img.value)
+        im = gore2.image_from_path(im_path)
+        
     im = gore2.deres_image(im, float(w_quality.value / 100))
     if (w_angle.value > 0):
         im = gore2.rotate_image(im, w_angle.value)
@@ -184,7 +198,7 @@ def calculate(gore_args, allow_save=False):
 def on_calculate(b):
     calculate(get_inputs(), allow_save = True)
 
-@debounce(1)
+@debounce(0.5)
 def on_edit_parameters(change):
     inputs = get_inputs()
     calculate(inputs)
