@@ -3,4 +3,4 @@ numpy
 matplotlib
 ipywidgets
 scipy
-cv2
+opencv-python-headless
