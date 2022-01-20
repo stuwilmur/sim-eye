@@ -4,3 +4,4 @@ matplotlib
 ipywidgets
 scipy
 opencv-python-headless
+voila
