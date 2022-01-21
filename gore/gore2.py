@@ -130,7 +130,7 @@ def make_equatorial (im,
                     lam_min = -mt.pi, 
                     lam_max = mt.pi,
                     phi_cap = mt.pi / 2,
-                    projection = SINUSOIDAL):
+                    projection = CASSINI):
     """
     make_equatorial returns an image that can be used as a gore net
     
@@ -140,7 +140,6 @@ def make_equatorial (im,
     phi_max:        maximum latitude (radians)
     lam_min:        minimum longitude (radians)    
     lam_max:        maximum longitude (radians)
-    phi_no_cut:     angular size of no-cut zone (radians)
     phi_cap:        angular size of pole cap (radians)
     alpha_limit:    no goring beyond this angle (radians)
     
@@ -207,7 +206,7 @@ def make_polar (im,
                phi_max = mt.pi / 2, 
                lam_min = -mt.pi, 
                lam_max = mt.pi,
-               projection = SINUSOIDAL):
+               projection = CASSINI):
     
     # demand that the pole is included if the gores are to be stitched at the pole
     phi_min = -mt.pi / 2
@@ -378,9 +377,9 @@ def polecap (im,
 def make_rotary (im, 
                 focal_length, 
                 alpha_max, 
-                num_gores, 
-                projection,  
-                phi_no_cut):
+                num_gores,   
+                phi_no_cut,
+                projection = CASSINI):
     """
     make_rotary      master function to produce a gore net stitched at the pole
     
