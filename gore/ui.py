@@ -146,9 +146,8 @@ w_quality = widgets.IntSlider(
 display(w_quality)
 
 w_projection = widgets.Dropdown(
-    options=["sinusoidal", "cassini", "american polyconic", 
-             "rectanguar polyconic", "transverse mercator"],
-    value='cassini',
+    options=[('Cassini', gore2.CASSINI), ('Sinusoidal', gore2.SINUSOIDAL)],
+    value=gore2.CASSINI,
     description='Projection:',
     disabled=False,
 )
