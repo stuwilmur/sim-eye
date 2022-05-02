@@ -29,6 +29,13 @@ class ImageLabel(QLabel):
 
     def setPixmap(self, image):
         super().setPixmap(image)
+        w = super().width();
+        h = super().height();
+        
+        super().setScaledContents(1)
+
+        # set a scaled pixmap to a w x h window keeping its aspect ratio 
+        super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio));
 
 class MainWindow(QMainWindow):
 
@@ -163,7 +170,7 @@ class MainWindow(QMainWindow):
         self.rotationWidget.setValue(self.rotationValue)
         self.qualityWidget.setValue(self.qualityValue)
 
-        # connect with slots
+        # connect input widgets with slots
         self.focalLengthWidget.valueChanged.connect(self.value_changed)
         self.focalLengthWidget.sliderMoved.connect(self.slider_position)
         self.focalLengthWidget.sliderPressed.connect(self.slider_pressed)
