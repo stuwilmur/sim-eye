@@ -11,7 +11,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, 
                              QVBoxLayout, QComboBox, QSlider, QLabel, 
                              QPushButton, QToolBar, QAction, QFileDialog,
-                             QLabel)
+                             QLabel, qApp)
 from PyQt5.QtGui import QPalette, QColor, QPixmap
 from PyQt5.QtCore import Qt
 
@@ -250,6 +250,8 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         
+        self.state = State.NO_INPUT
+        
     def open_handler(self):
         self.imagePath, _ = QFileDialog.getOpenFileName()
         pixmap = QPixmap(self.imagePath)
@@ -266,8 +268,17 @@ class MainWindow(QMainWindow):
         print (save_as)
         
     def exit_handler(self):
-        pass
-        
+        if (self.state == State.NO_INPUT or
+            self.state == State.READY_TO_GORE or
+            self.state == State.SAVED_CHANGES):
+            qApp.quit()
+        elif (self.state == State.CALCULATING):
+            pass # TODO: Prompt
+        elif (self.state == State.UNSAVED_CHANGES):
+            pass # TODO: Prompt
+        else:
+            pass # error
+             
     def gore_handler(self):
         pass
     
@@ -338,10 +349,9 @@ class MainWindow(QMainWindow):
     def calculate(self):
         sys.sleep(5)
 
-
 app = QApplication(sys.argv)
 
 window = MainWindow()
 window.show()
 
-app.exec()
+sys.exit( app.exec_() )
