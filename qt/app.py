@@ -15,6 +15,14 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout,
 from PyQt5.QtGui import QPalette, QColor, QPixmap
 from PyQt5.QtCore import Qt
 
+from enum import Enum
+class State(Enum):
+    NO_INPUT        = 1
+    READY_TO_GORE   = 2
+    CALCULATING     = 3
+    UNSAVED_CHANGES = 4
+    SAVED_CHANGES   = 5
+
 class ImageLabel(QLabel):
     def __init__(self, text):
         super().__init__()
@@ -23,7 +31,8 @@ class ImageLabel(QLabel):
         self.setText('\n\n {0} \n\n'.format(text))
         self.setStyleSheet('''
             QLabel{
-                border: 2px dashed #aaa
+                border: 2px dashed #aaa;
+                font: italic
             }
         ''')
 
@@ -42,7 +51,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        self.setWindowTitle("Sim eye")
+        self.setWindowTitle("Gored Sim Eye")
         
         # allow drap & drop
         self.setAcceptDrops(True)
@@ -55,6 +64,7 @@ class MainWindow(QMainWindow):
         noCutAreaLayout = QHBoxLayout()
         rotationLayout = QHBoxLayout()
         qualityLayout = QHBoxLayout()
+        buttonLayout = QHBoxLayout()
         
         # overall layout
         layout = QHBoxLayout()
@@ -76,13 +86,13 @@ class MainWindow(QMainWindow):
         self.imagePath = ""
         
         # control labels
-        self.focalLengthLabel = QLabel("Focal length = {0} degrees".format(self.focalLengthValue))
-        self.fundusImageSizeLabel = QLabel("Fundus image size: {0} degrees".format(self.fundusImageSizeValue))
+        self.focalLengthLabel = QLabel("Focal length: {0}\u00b0".format(self.focalLengthValue))
+        self.fundusImageSizeLabel = QLabel("Fundus image size: {0}\u00b0".format(self.fundusImageSizeValue))
         self.numberOfGoresLabel = QLabel("Number of gores: {0}".format(self.numberOfGoresValue))
-        self.retinalSizeLabel = QLabel("Retinal size: {0} degrees".format(self.retinalSizeValue))
-        self.noCutAreaLabel = QLabel("No-cut area: {0} degrees".format(self.noCutAreaValue))
-        self.rotationLabel = QLabel("Rotation: {0} degrees".format(self.rotationValue))
-        self.qualityLabel = QLabel("Quality: {0} %".format(self.qualityValue))
+        self.retinalSizeLabel = QLabel("Retinal size: {0}\u00b0".format(self.retinalSizeValue))
+        self.noCutAreaLabel = QLabel("No-cut area: {0}\u00b0".format(self.noCutAreaValue))
+        self.rotationLabel = QLabel("Rotation: {0}\u00b0".format(self.rotationValue * 0.5))
+        self.qualityLabel = QLabel("Quality: {0}%".format(self.qualityValue))
 
         # create sliders
         self.focalLengthWidget = QSlider(Qt.Horizontal)
@@ -93,8 +103,11 @@ class MainWindow(QMainWindow):
         self.rotationWidget = QSlider(Qt.Horizontal)
         self.qualityWidget = QSlider(Qt.Horizontal)
         
-        # create button
-        self.goreButtonWidget = QPushButton("Create gores")
+        # create buttons
+        self.goreButtonWidget = QPushButton("Gore")
+        self.goreButtonWidget.setEnabled(False)
+        self.cancelButtonWidget = QPushButton("Cancel")
+        self.cancelButtonWidget.setEnabled(False)
         
         # create input + output image ImageLabel
         self.inputImageLabel = ImageLabel("Drop image here")
@@ -129,7 +142,9 @@ class MainWindow(QMainWindow):
         qualityLayout.addWidget(self.qualityWidget)
         leftLayout.addLayout(qualityLayout)
         
-        leftLayout.addWidget(self.goreButtonWidget)
+        buttonLayout.addWidget(self.goreButtonWidget)
+        buttonLayout.addWidget(self.cancelButtonWidget)
+        leftLayout.addLayout(buttonLayout)
         
         # add previews to RHS
         rightLayout.addWidget(self.inputImageLabel)
@@ -155,7 +170,7 @@ class MainWindow(QMainWindow):
         self.noCutAreaWidget.setRange(0,90)
         self.noCutAreaWidget.setSingleStep(1)
         
-        self.rotationWidget.setRange(0,360)
+        self.rotationWidget.setRange(0,720)
         self.rotationWidget.setSingleStep(1)
         
         self.qualityWidget.setRange(10,100)
@@ -206,47 +221,80 @@ class MainWindow(QMainWindow):
         self.qualityWidget.sliderPressed.connect(self.slider_pressed)
         self.qualityWidget.sliderReleased.connect(self.slider_released)
         
-        self.goreButtonWidget.clicked.connect(self.button_clicked)
+        self.goreButtonWidget.clicked.connect(self.gore_handler)
+        self.cancelButtonWidget.clicked.connect(self.cancel_handler)
         
         # the menubar
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
         fileMenu = menubar.addMenu('File')
 
+        # the menu actions
         openAction = QAction('&Open input image...', self)  
-        openAction.triggered.connect(self.openImage) 
+        openAction.triggered.connect(self.open_handler) 
+        saveAction = QAction('&Save', self)
+        saveAction.setEnabled(False)
+        saveAction.triggered.connect(self.save_forwarder)
+        saveAsAction = QAction('S&ave as...', self)
+        saveAsAction.setEnabled(False)
+        saveAsAction.triggered.connect(self.save_as_forwarder)
+        exitAction = QAction('&Exit', self)
+        exitAction.triggered.connect(self.exit_handler)
+        
         fileMenu.addAction(openAction)
+        fileMenu.addAction(saveAction)
+        fileMenu.addAction(saveAsAction)
+        fileMenu.addAction(exitAction)
 
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         
-    def openImage(self):
+    def open_handler(self):
         self.imagePath, _ = QFileDialog.getOpenFileName()
         pixmap = QPixmap(self.imagePath)
         self.inputImageLabel.setPixmap(pixmap)
         
+    def save_forwarder(self):
+        self.save_handler(False)
+        
+    def save_as_forwarder(self):
+        self.save_handler(True)
+        
+    def save_handler(self, save_as):
+        print (self.sender().text())
+        print (save_as)
+        
+    def exit_handler(self):
+        pass
+        
+    def gore_handler(self):
+        pass
+    
+    def cancel_handler(self):
+        pass
+        
     def value_changed(self, i):
         if (self.sender() == self.focalLengthWidget):
-            self.focalLengthLabel.setText("Focal length = {0} degrees".format(i))
+            self.focalLengthLabel.setText("Focal length: {0}\u00b0".format(i))
             self.focalLengthValue = i
         elif (self.sender() == self.fundusImageSizeWidget):
-            self.fundusImageSizeLabel.setText("Fundus image size: {0} degrees".format(i))
+            self.fundusImageSizeLabel.setText("Image extent: {0}\u00b0".format(i))
             self.fundusImageSizeValue = i
         elif (self.sender() == self.numberOfGoresWidget):
-            self.numberOfGoresLabel.setText("Number of gores: {0}".format(i))
+            self.numberOfGoresLabel.setText("No. gores: {0}".format(i))
             self.numberOfGoresValue = i
         elif (self.sender() == self.retinalSizeWidget):
-            self.retinalSizeLabel.setText("Retinal size: {0} degrees".format(i))
+            self.retinalSizeLabel.setText("Retinal size: {0}\u00b0".format(i))
             self.retinalSizeValue = i
         elif (self.sender() == self.noCutAreaWidget):
-            self.noCutAreaLabel.setText("No-cut area: {0} degrees".format(i))
+            self.noCutAreaLabel.setText("No-cut area: {0}\u00b0".format(i))
             self.noCutAreaValue = i
         elif (self.sender() == self.rotationWidget):
-            self.rotationLabel.setText("Rotation: {0} degrees".format(i))
+            self.rotationLabel.setText("Rotation: {0}\u00b0".format(i * 0.5))
             self.rotationValue = i
         elif (self.sender() == self.qualityWidget):
-            self.qualityLabel.setText("Quality: {0} %".format(i))
+            self.qualityLabel.setText("Quality: {0}%".format(i))
             self.qualityValue = i
 
     def slider_position(self, p):
@@ -260,9 +308,6 @@ class MainWindow(QMainWindow):
     def slider_released(self):
         #print("Released")
         pass
-    
-    def button_clicked(self):
-        print("clicked")
         
     def dragEnterEvent(self, event):
         if event.mimeData().hasImage:
@@ -289,6 +334,9 @@ class MainWindow(QMainWindow):
     def set_image(self, file_path):
         self.imagePath = file_path
         self.inputImageLabel.setPixmap(QPixmap(file_path))
+        
+    def calculate(self):
+        sys.sleep(5)
 
 
 app = QApplication(sys.argv)
