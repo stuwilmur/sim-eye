@@ -8,20 +8,31 @@ Created on Tue Apr 26 21:07:09 2022
 
 
 import sys
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QHBoxLayout, 
-                             QVBoxLayout, QComboBox, QSlider, QLabel, 
-                             QPushButton, QToolBar, QAction, QFileDialog,
-                             QLabel, qApp)
-from PyQt5.QtGui import QPalette, QColor, QPixmap
+from PyQt5.QtWidgets import (QApplication, 
+                             QMainWindow, 
+                             QWidget, 
+                             QHBoxLayout, 
+                             QVBoxLayout,
+                             QSlider, 
+                             QLabel, 
+                             QPushButton,
+                             QAction, 
+                             QFileDialog, 
+                             qApp)
+from PyQt5.QtWidgets import QMessageBox as qm
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
+from time import sleep
 
 from enum import Enum
 class State(Enum):
-    NO_INPUT        = 1
-    READY_TO_GORE   = 2
-    CALCULATING     = 3
-    UNSAVED_CHANGES = 4
-    SAVED_CHANGES   = 5
+    NO_INPUT                    = 1
+    READY_TO_GORE               = 2
+    CALCULATING                 = 3
+    CALCULATING_UNSAVED_CHANGES = 4
+    CALCULATING_SAVED_CHANGES   = 5
+    UNSAVED_CHANGES             = 6
+    SAVED_CHANGES               = 7
 
 class ImageLabel(QLabel):
     def __init__(self, text):
@@ -38,13 +49,13 @@ class ImageLabel(QLabel):
 
     def setPixmap(self, image):
         super().setPixmap(image)
-        w = super().width();
-        h = super().height();
+        w = super().width()
+        h = super().height()
         
         super().setScaledContents(1)
 
         # set a scaled pixmap to a w x h window keeping its aspect ratio 
-        super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio));
+        super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio))
 
 class MainWindow(QMainWindow):
 
@@ -106,8 +117,6 @@ class MainWindow(QMainWindow):
         # create buttons
         self.goreButtonWidget = QPushButton("Gore")
         self.goreButtonWidget.setEnabled(False)
-        self.cancelButtonWidget = QPushButton("Cancel")
-        self.cancelButtonWidget.setEnabled(False)
         
         # create input + output image ImageLabel
         self.inputImageLabel = ImageLabel("Drop image here")
@@ -143,7 +152,6 @@ class MainWindow(QMainWindow):
         leftLayout.addLayout(qualityLayout)
         
         buttonLayout.addWidget(self.goreButtonWidget)
-        buttonLayout.addWidget(self.cancelButtonWidget)
         leftLayout.addLayout(buttonLayout)
         
         # add previews to RHS
@@ -221,8 +229,7 @@ class MainWindow(QMainWindow):
         self.qualityWidget.sliderPressed.connect(self.slider_pressed)
         self.qualityWidget.sliderReleased.connect(self.slider_released)
         
-        self.goreButtonWidget.clicked.connect(self.gore_handler)
-        self.cancelButtonWidget.clicked.connect(self.cancel_handler)
+        self.goreButtonWidget.clicked.connect(self.gore_cancel_handler)
         
         # the menubar
         menubar = self.menuBar()
@@ -250,12 +257,55 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         
-        self.state = State.NO_INPUT
+        self.state = State.NO_INPUT # starting state
+        self.outputPath = None
         
-    def open_handler(self):
+    def open_image_dialog(self):
         self.imagePath, _ = QFileDialog.getOpenFileName()
         pixmap = QPixmap(self.imagePath)
         self.inputImageLabel.setPixmap(pixmap)
+        return True
+    
+    def save_output_dialog(self):
+        pass #todo
+    
+    def save_output(self):
+        pass #todo
+    
+    def start_calculating(self):
+        pass #todo
+        
+    def stop_calculating(self):
+        pass #todo
+    
+    def raise_state_exception(self, handlerName):
+        raise Exception("{0} unexpected in {1}".format(self.state, handlerName))
+        
+    def transition(self, newState = None):
+        if (newState != None):
+            self.state = newState
+        
+    def open_handler(self):
+        if (self.state == State.NO_INPUT or
+            self.state == State.READY_TO_GORE):
+            if (self.open_image_dialog()):
+                self.transition(State.READY_TO_GORE)
+        elif (self.state == State.SAVED_CHANGES):
+            if (self.open_image_dialog()):
+                self.transition(State.READY_TO_GORE)
+                self.outputPath = None
+        elif (self.state == State.CALCULATING or
+              self.state == State.CALCULATING_UNSAVED_CHANGES or
+              self.state == State.CALCULATING_SAVED_CHANGES):
+            self.raise_state_exception(__name__)
+        elif (self.state == State.UNSAVED_CHANGES):
+            ret = qm.question(self,'', "Unsaved changes: open new image and lose changes?", qm.Yes | qm.No)
+            if (ret == qm.Yes):
+                if (self.open_image_dialog()):  
+                    self.transition(State.READY_TO_GORE)
+                    self.outputPath = None
+        else:
+            self.raise_state_exception(__name__)
         
     def save_forwarder(self):
         self.save_handler(False)
@@ -264,26 +314,81 @@ class MainWindow(QMainWindow):
         self.save_handler(True)
         
     def save_handler(self, save_as):
-        print (self.sender().text())
-        print (save_as)
-        
+        if (self.state == State.NO_INPUT or 
+            self.state == State.READY_TO_GORE or 
+            self.state == State.CALCULATING or
+            self.state == State.CALCULATING_UNSAVED_CHANGES or
+            self.state == State.CALCULATING_SAVED_CHANGES):
+            self.raise_state_exception(__name__)
+        elif (self.state == State.UNSAVED_CHANGES):
+            if (save_as or self.outputPath == None):    
+                if (self.save_output_dialog()):
+                    self.transition(State.SAVED_CHANGES)
+            else:
+                if (self.save_output()):
+                    self.transition(State.SAVED_CHANGES)
+        elif (self.state == State.SAVED_CHANGES):
+            if (save_as):
+                self.save_output_dialog()
+            self.transition()
+        else:
+            self.raise_state_exception(__name__)
+            
     def exit_handler(self):
         if (self.state == State.NO_INPUT or
             self.state == State.READY_TO_GORE or
             self.state == State.SAVED_CHANGES):
             qApp.quit()
-        elif (self.state == State.CALCULATING):
-            pass # TODO: Prompt
+        elif (self.state == State.CALCULATING or
+              self.state == State.CALCULATING_SAVED_CHANGES):
+            ret = qm.question(self,'', "Calculation running: really exit?", qm.Yes | qm.No)
+            if (ret == qm.Yes):
+                qApp.quit()   
+            self.transition()
+        elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
+            ret = qm.question(self,'', "Calculation running: exit and lose unsaved changes?", qm.Yes | qm.No)
+            if (ret == qm.Yes):
+                qApp.quit()
+            self.transition()
         elif (self.state == State.UNSAVED_CHANGES):
-            pass # TODO: Prompt
+            ret = qm.question(self,'', "Unsaved changes: exit and lose changes?", qm.Yes | qm.No)
+            if (ret == qm.Yes):
+                qApp.quit()
+            self.transition()
         else:
-            pass # error
+            self.raise_state_exception(__name__)
              
-    def gore_handler(self):
-        pass
-    
-    def cancel_handler(self):
-        pass
+    def gore_cancel_handler(self):
+        if (self.state == State.NO_INPUT):
+            self.raise_state_exception(__name__)
+        elif (self.state == State.READY_TO_GORE or
+              self.state == State.UNSAVED_CHANGES or
+              self.state == State.SAVED_CHANGES):
+            self.transition(State.CALCULATING)
+            self.start_calculating()
+        elif (self.state == State.CALCULATING): #cancel
+            self.stop_calculating()
+            self.transition(State.READY_TO_GORE)
+        elif (self.state == State.CALCULATING_UNSAVED_CHANGES): #cancel
+            self.stop_calculating()
+            self.transition(State.UNSAVED_CHANGES)
+        elif (self.state == State.CALCULATING_SAVED_CHANGES): #cancel
+            self.stop_calculating()
+            self.transition(State.SAVED_CHANGES)
+        else:
+            self.raise_state_exception(__name__)
+            
+    def calculation_complete_handler(self):
+        if (self.state == State.NO_INPUT or
+            self.state == State.READY_TO_GORE or
+            self.state == State.UNSAVED_CHANGES or
+            self.state == State.SAVED_CHANGES):
+            self.raise_state_exception(__name__)
+            self.transition()
+        elif (self.state == State.CALCULATING or
+              self.state == State.CALCULATING_UNSAVED_CHANGES or
+              self.state == State.CALCULATING_SAVED_CHANGES):
+            self.transition(State.UNSAVED_CHANGES)
         
     def value_changed(self, i):
         if (self.sender() == self.focalLengthWidget):
@@ -347,7 +452,7 @@ class MainWindow(QMainWindow):
         self.inputImageLabel.setPixmap(QPixmap(file_path))
         
     def calculate(self):
-        sys.sleep(5)
+        sleep(5)
 
 app = QApplication(sys.argv)
 
