@@ -309,6 +309,7 @@ class MainWindow(QMainWindow):
                                                   os.getcwd(),
                                                   fileFilter)
         if (fileName != ""):
+            
             self.outputPath = fileName
             return True
         else:
@@ -412,20 +413,19 @@ class MainWindow(QMainWindow):
                # invalid state: do nothing
                pass
         
-        
     def open_handler(self):
         if (self.state == State.NO_INPUT or
             self.state == State.READY_TO_GORE):
             if (self.open_image_dialog()):
-                self.update_widgets()
                 self.transition(State.READY_TO_GORE)
             else:
                 self.transition()
         elif (self.state == State.SAVED_CHANGES):
             if (self.open_image_dialog()):
-                self.goreButtonWidget.setEnabled(True)
                 self.outputPath = None
                 self.transition(State.READY_TO_GORE)
+            else:
+                self.transition()
         elif (self.state == State.CALCULATING or
               self.state == State.CALCULATING_UNSAVED_CHANGES or
               self.state == State.CALCULATING_SAVED_CHANGES or
@@ -440,8 +440,11 @@ class MainWindow(QMainWindow):
             if (ret == qm.Yes):
                 if (self.open_image_dialog()):
                     self.transition(State.READY_TO_GORE)
-                    self.transition(State.READY_TO_GORE)
                     self.outputPath = None
+                else:
+                    self.transition()
+            else:
+                self.transition()
         else:
             # invalid state
             self.raise_state_exception()
@@ -470,9 +473,13 @@ class MainWindow(QMainWindow):
             if (save_as or self.outputPath == None):    
                 if (self.save_output_dialog()):
                     self.transition(State.SAVED_CHANGES)
+                else:
+                    self.transition()
             else:
                 if (self.save_output()):
                     self.transition(State.SAVED_CHANGES)
+                else:
+                    self.transition()
         elif (self.state == State.SAVED_CHANGES):
             if (save_as):
                 self.save_output_dialog()
@@ -495,21 +502,24 @@ class MainWindow(QMainWindow):
             ret = qm.question(self,'', "Calculation running: really exit?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 self.transition(State.END)
-                qApp.quit()   
-            self.transition()
+                qApp.quit()  
+            else:
+                self.transition()
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
             ret = qm.question(self,'', "Calculation running: exit and lose unsaved changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 self.transition(State.END)
                 qApp.quit()
-            self.transition()
+            else:
+                self.transition()
         elif (self.state == State.UNSAVED_CHANGES or
               self.state == State.CANCELLING_SAVED_CHANGES):
             ret = qm.question(self,'', "Unsaved changes: exit and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 self.transition(State.END)
                 qApp.quit()
-            self.transition()
+            else:
+                self.transition()
         elif (self.state == State.START or
               self.state == State.END):
             self.raise_state_exception()
