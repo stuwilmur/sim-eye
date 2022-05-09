@@ -26,9 +26,10 @@ from time import sleep
 import logging, sys, os
 sys.path.append("../gore")
 import gore2
-
 from enum import Enum
+
 class State(Enum):
+    # Class defining FSM states
     START                       = 0
     NO_INPUT                    = 1
     READY_TO_GORE               = 2
@@ -43,8 +44,8 @@ class State(Enum):
     END                         = 11
     NUMBER_OF_STATES            = 12
 
-# Class to display image preview windows
 class ImageLabel(QLabel):
+    # Class to display image preview windows
     def __init__(self, text):
         super().__init__()
 
@@ -67,8 +68,8 @@ class ImageLabel(QLabel):
         # set a scaled pixmap to a w x h window keeping its aspect ratio 
         super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio))
 
-# Main window class
 class MainWindow(QMainWindow):
+    # Class for main window
 
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -114,7 +115,8 @@ class MainWindow(QMainWindow):
         self.noCutAreaValue = 10
         self.rotationValue = 0
         self.qualityValue = 20
-        self.imagePath = ""
+        self.imagePath = None
+        self.outputPath = None
         
         # control labels
         self.focalLengthLabel = QLabel("Focal length: {0}\u00b0".format(self.focalLengthValue))
@@ -264,7 +266,7 @@ class MainWindow(QMainWindow):
         menubar.setNativeMenuBar(False)
         fileMenu = menubar.addMenu('File')
 
-        # the menu actions
+        # the menu actions - members so they can be updated later
         self.openAction = QAction('&Open input image...', self)  
         self.openAction.triggered.connect(self.open_handler) 
         self.saveAction = QAction('&Save', self)
@@ -274,21 +276,24 @@ class MainWindow(QMainWindow):
         self.exitAction = QAction('&Exit', self)
         self.exitAction.triggered.connect(self.exit_handler)
         
+        # add the actions
         fileMenu.addAction(self.openAction)
         fileMenu.addAction(self.saveAction)
         fileMenu.addAction(self.saveAsAction)
         fileMenu.addAction(self.exitAction)
 
+        # create "the" widget and set the layout
         widget = QWidget()
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         
+        # initialise the FSM
         self.state = State.START
         self.transition(State.NO_INPUT)
         self.update_widgets()
-        self.outputPath = None
         
     def open_image_dialog(self):
+        # returns true if a valid image filename was set
         fileFilter = "Image files (*.jpg *.gif *.png *.bmp *.tiff)"
         fileName, _ = QFileDialog.getOpenFileName(self, 
                                                 'Open file', 
@@ -303,6 +308,7 @@ class MainWindow(QMainWindow):
             return False
     
     def save_output_dialog(self):
+        # returns true if an image was saved successfuly
         fileFilter = "Image files (*.jpg *.gif *.png *.bmp *.tiff)"
         fileName, _ = QFileDialog.getSaveFileName(self,
                                                   'Save file',
@@ -329,6 +335,7 @@ class MainWindow(QMainWindow):
         raise Exception("{0} unexpected in {1}".format(self.state, caller))
         
     def transition(self, newState = None):
+        # transition the main FSM
         caller = sys._getframe(1).f_code.co_name
         if (newState != None):
             logging.debug("State transition: %s => %s in %s", self.state, newState, caller)
@@ -337,81 +344,82 @@ class MainWindow(QMainWindow):
             logging.debug("No transition: %s in %s", self.state, caller)
             
     def update_widgets(self):
-           if (self.state ==  State.START):
-               self.openAction.setEnabled(False)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(False)
-               self.goreButtonWidget.setText("")
-           elif (self.state == State.NO_INPUT):
-               self.openAction.setEnabled(True)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(False)
-               self.goreButtonWidget.setText("Gore")
-           elif (self.state == State.READY_TO_GORE):
-               self.openAction.setEnabled(True)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(True)
-               self.goreButtonWidget.setText("Gore")
-           elif (self.state == State.CALCULATING):
-               self.openAction.setEnabled(False)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(True)
-               self.goreButtonWidget.setText("Cancel")    
-           elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
-               self.openAction.setEnabled(False)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(True)
-               self.goreButtonWidget.setText("Cancel")
-           elif (self.state == State.CALCULATING_SAVED_CHANGES):
-               self.openAction.setEnabled(False)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(True)
-               self.goreButtonWidget.setText("Cancel")      
-           elif (self.state == State.CANCELLING):
-               self.openAction.setEnabled(False)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(False)
-               self.goreButtonWidget.setText("Cancel")
-           elif (self.state == State.CANCELLING_UNSAVED_CHANGES):
-               self.openAction.setEnabled(False)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(False)
-               self.goreButtonWidget.setText("Cancel")
-           elif (self.state == State.CANCELLING_SAVED_CHANGES):
-               self.openAction.setEnabled(False)
-               self.saveAction.setEnabled(False)
-               self.saveAsAction.setEnabled(False)
-               self.goreButtonWidget.setEnabled(False)
-               self.goreButtonWidget.setText("Cancel")
-           elif (self.state == State.UNSAVED_CHANGES):
-               self.openAction.setEnabled(True)
-               self.saveAction.setEnabled(True)
-               self.saveAsAction.setEnabled(True)
-               self.goreButtonWidget.setEnabled(True)
-               self.goreButtonWidget.setText("Gore")
-           elif (self.state == State.SAVED_CHANGES):
-               self.openAction.setEnabled(True)
-               self.saveAction.setEnabled(True)
-               self.saveAsAction.setEnabled(True)
-               self.goreButtonWidget.setEnabled(True)
-               self.goreButtonWidget.setText("Gore")
-           elif (self.state == State.UNSAVED_CHANGES):
-               self.openAction.setEnabled(True)
-               self.saveAction.setEnabled(True)
-               self.saveAsAction.setEnabled(True)
-               self.goreButtonWidget.setEnabled(True)
-               self.goreButtonWidget.setText("Gore")
-           else:
-               # invalid state: do nothing
-               pass
+        # update the menu items and the gore/cancel button
+        if (self.state ==  State.START):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(False)
+            self.goreButtonWidget.setText("")
+        elif (self.state == State.NO_INPUT):
+            self.openAction.setEnabled(True)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(False)
+            self.goreButtonWidget.setText("Gore")
+        elif (self.state == State.READY_TO_GORE):
+            self.openAction.setEnabled(True)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(True)
+            self.goreButtonWidget.setText("Gore")
+        elif (self.state == State.CALCULATING):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(True)
+            self.goreButtonWidget.setText("Cancel")    
+        elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(True)
+            self.goreButtonWidget.setText("Cancel")
+        elif (self.state == State.CALCULATING_SAVED_CHANGES):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(True)
+            self.goreButtonWidget.setText("Cancel")      
+        elif (self.state == State.CANCELLING):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(False)
+            self.goreButtonWidget.setText("Cancel")
+        elif (self.state == State.CANCELLING_UNSAVED_CHANGES):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(False)
+            self.goreButtonWidget.setText("Cancel")
+        elif (self.state == State.CANCELLING_SAVED_CHANGES):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(False)
+            self.goreButtonWidget.setText("Cancel")
+        elif (self.state == State.UNSAVED_CHANGES):
+            self.openAction.setEnabled(True)
+            self.saveAction.setEnabled(True)
+            self.saveAsAction.setEnabled(True)
+            self.goreButtonWidget.setEnabled(True)
+            self.goreButtonWidget.setText("Gore")
+        elif (self.state == State.SAVED_CHANGES):
+            self.openAction.setEnabled(True)
+            self.saveAction.setEnabled(True)
+            self.saveAsAction.setEnabled(True)
+            self.goreButtonWidget.setEnabled(True)
+            self.goreButtonWidget.setText("Gore")
+        elif (self.state == State.UNSAVED_CHANGES):
+            self.openAction.setEnabled(True)
+            self.saveAction.setEnabled(True)
+            self.saveAsAction.setEnabled(True)
+            self.goreButtonWidget.setEnabled(True)
+            self.goreButtonWidget.setText("Gore")
+        else:
+            # invalid state: do nothing
+            pass
         
     def open_handler(self):
         if (self.state == State.NO_INPUT or
@@ -452,9 +460,11 @@ class MainWindow(QMainWindow):
         self.update_widgets()
         
     def save_forwarder(self):
+        # forward call from "Save" action to common handler
         self.save_handler(False)
         
     def save_as_forwarder(self):
+        # forward call from "Save As" action to common handler
         self.save_handler(True)
         
     def save_handler(self, save_as):
@@ -530,6 +540,7 @@ class MainWindow(QMainWindow):
         self.update_widgets()
              
     def gore_cancel_handler(self):
+        # handle button press: both gore and cancel
         if (self.state == State.NO_INPUT):
             self.raise_state_exception()
         elif (self.state == State.READY_TO_GORE or
@@ -561,6 +572,8 @@ class MainWindow(QMainWindow):
         self.update_widgets()
             
     def calculation_complete_forwarder(self):
+        # forward calls from thread.finished() depending on whether calculation
+        # completed or was cancelled
         if (self.worker.complete):
             self.calculation_complete_handler()
         else:
@@ -614,6 +627,7 @@ class MainWindow(QMainWindow):
         self.update_widgets()
             
     def value_changed(self, i):
+        # handle updates from the ui elements (sliders)
         if (self.sender() == self.focalLengthWidget):
             self.focalLengthLabel.setText("Focal length: {0}\u00b0".format(i))
             self.focalLengthValue = i
@@ -702,7 +716,7 @@ class Worker(QObject):
         self.imagePath = imagePath
 
     def run(self):
-        """Long-running task."""
+        """This is where we do the goring"""
         for i in range(5):
             sleep(1)
             logging.debug("calculating: %i", i)
