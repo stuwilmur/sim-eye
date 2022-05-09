@@ -17,15 +17,20 @@ from PyQt5.QtWidgets import (QApplication,
                              QLabel, 
                              QPushButton,
                              QAction, 
-                             QFileDialog, 
+                             QFileDialog,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
+
 from time import sleep
+import logging, sys
+sys.path.append("../gore")
+import gore2
 
 from enum import Enum
 class State(Enum):
+    START                       = 0
     NO_INPUT                    = 1
     READY_TO_GORE               = 2
     CALCULATING                 = 3
@@ -33,7 +38,9 @@ class State(Enum):
     CALCULATING_SAVED_CHANGES   = 5
     UNSAVED_CHANGES             = 6
     SAVED_CHANGES               = 7
+    END                         = 8
 
+# Class to display image preview windows
 class ImageLabel(QLabel):
     def __init__(self, text):
         super().__init__()
@@ -57,10 +64,14 @@ class ImageLabel(QLabel):
         # set a scaled pixmap to a w x h window keeping its aspect ratio 
         super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio))
 
+# Main window class
 class MainWindow(QMainWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
+        
+        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+        logging.debug(' Debugging Gored Sim Eye!')
 
         self.setWindowTitle("Gored Sim Eye")
         
@@ -257,7 +268,8 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         
-        self.state = State.NO_INPUT # starting state
+        self.state = State.START
+        self.transition(State.NO_INPUT)
         self.outputPath = None
         
     def open_image_dialog(self):
@@ -273,7 +285,7 @@ class MainWindow(QMainWindow):
         pass #todo
     
     def start_calculating(self):
-        pass #todo
+        self.runLongTask()
         
     def stop_calculating(self):
         pass #todo
@@ -283,17 +295,20 @@ class MainWindow(QMainWindow):
         
     def transition(self, newState = None):
         if (newState != None):
+            logging.debug("State transition: {0} => {1}".format(self.state, newState))
             self.state = newState
         
     def open_handler(self):
         if (self.state == State.NO_INPUT or
             self.state == State.READY_TO_GORE):
             if (self.open_image_dialog()):
+                self.goreButtonWidget.setEnabled(True)
                 self.transition(State.READY_TO_GORE)
         elif (self.state == State.SAVED_CHANGES):
             if (self.open_image_dialog()):
-                self.transition(State.READY_TO_GORE)
+                self.goreButtonWidget.setEnabled(True)
                 self.outputPath = None
+                self.transition(State.READY_TO_GORE)
         elif (self.state == State.CALCULATING or
               self.state == State.CALCULATING_UNSAVED_CHANGES or
               self.state == State.CALCULATING_SAVED_CHANGES):
@@ -301,7 +316,8 @@ class MainWindow(QMainWindow):
         elif (self.state == State.UNSAVED_CHANGES):
             ret = qm.question(self,'', "Unsaved changes: open new image and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
-                if (self.open_image_dialog()):  
+                if (self.open_image_dialog()):
+                    self.transition(State.READY_TO_GORE)
                     self.transition(State.READY_TO_GORE)
                     self.outputPath = None
         else:
@@ -338,21 +354,25 @@ class MainWindow(QMainWindow):
         if (self.state == State.NO_INPUT or
             self.state == State.READY_TO_GORE or
             self.state == State.SAVED_CHANGES):
+            self.transition(State.END)
             qApp.quit()
         elif (self.state == State.CALCULATING or
               self.state == State.CALCULATING_SAVED_CHANGES):
             ret = qm.question(self,'', "Calculation running: really exit?", qm.Yes | qm.No)
             if (ret == qm.Yes):
+                self.transition(State.END)
                 qApp.quit()   
             self.transition()
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
             ret = qm.question(self,'', "Calculation running: exit and lose unsaved changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
+                self.transition(State.END)
                 qApp.quit()
             self.transition()
         elif (self.state == State.UNSAVED_CHANGES):
             ret = qm.question(self,'', "Unsaved changes: exit and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
+                self.transition(State.END)
                 qApp.quit()
             self.transition()
         else:
@@ -365,15 +385,16 @@ class MainWindow(QMainWindow):
               self.state == State.UNSAVED_CHANGES or
               self.state == State.SAVED_CHANGES):
             self.transition(State.CALCULATING)
+            self.goreButtonWidget.setEnabled(False)
             self.start_calculating()
         elif (self.state == State.CALCULATING): #cancel
-            self.stop_calculating()
+            self.transition()
             self.transition(State.READY_TO_GORE)
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES): #cancel
-            self.stop_calculating()
+            self.transition()
             self.transition(State.UNSAVED_CHANGES)
         elif (self.state == State.CALCULATING_SAVED_CHANGES): #cancel
-            self.stop_calculating()
+            self.transition()
             self.transition(State.SAVED_CHANGES)
         else:
             self.raise_state_exception(__name__)
@@ -388,6 +409,7 @@ class MainWindow(QMainWindow):
         elif (self.state == State.CALCULATING or
               self.state == State.CALCULATING_UNSAVED_CHANGES or
               self.state == State.CALCULATING_SAVED_CHANGES):
+            self.goreButtonWidget.setEnabled(True)
             self.transition(State.UNSAVED_CHANGES)
         
     def value_changed(self, i):
@@ -414,15 +436,12 @@ class MainWindow(QMainWindow):
             self.qualityValue = i
 
     def slider_position(self, p):
-        #print("position", p)
         pass
 
     def slider_pressed(self):
-        #print("Pressed!")
         pass
 
     def slider_released(self):
-        #print("Released")
         pass
         
     def dragEnterEvent(self, event):
@@ -451,8 +470,38 @@ class MainWindow(QMainWindow):
         self.imagePath = file_path
         self.inputImageLabel.setPixmap(QPixmap(file_path))
         
-    def calculate(self):
-        sleep(5)
+    def runLongTask(self):
+        # Step 2: Create a QThread object
+        self.thread = QThread()
+        # Step 3: Create a worker object
+        self.worker = Worker()
+        # Step 4: Move worker to the thread
+        self.worker.moveToThread(self.thread)
+        # Step 5: Connect signals and slots
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        # Step 6: Start the thread
+        self.thread.start()
+
+        # Final resets
+        self.thread.finished.connect(
+            self.calculation_complete_handler
+        )
+        
+# Worker class
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def run(self):
+        """Long-running task."""
+        for i in range(5):
+            sleep(1)
+            logging.debug("calculating: {0}".format(i))
+            self.progress.emit(i + 1)
+        self.finished.emit()
 
 app = QApplication(sys.argv)
 
