@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QAction, 
                              QFileDialog,
                              QToolTip,
+                             QSizePolicy,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap
@@ -57,6 +58,12 @@ class ImageLabel(QLabel):
                 font: italic
             }
         ''')
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sizePolicy.setHeightForWidth(True)
+        self.setSizePolicy(sizePolicy)
+        
+    def heightForWidth(self, width):
+        return width
 
     def setPixmap(self, image):
         super().setPixmap(image)
@@ -149,8 +156,7 @@ class MainWindow(QMainWindow):
         self.goreButtonWidget = QPushButton()
         
         # create input + output image ImageLabel
-        self.inputImageLabel = ImageLabel("Drop image here")
-        self.outputImageLabel = ImageLabel("Output preview")
+        self.previewImageLabel = ImageLabel("Drop image here")
         
         # add sliders and button to LHS
         focalLengthLayout.addWidget(self.focalLengthLabel)
@@ -185,8 +191,7 @@ class MainWindow(QMainWindow):
         leftLayout.addLayout(buttonLayout)
         
         # add previews to RHS
-        rightLayout.addWidget(self.inputImageLabel)
-        rightLayout.addWidget(self.outputImageLabel)
+        rightLayout.addWidget(self.previewImageLabel)
         
         # add LHS + RHS to overall layout
         layout.addLayout(leftLayout, 1)
@@ -302,7 +307,7 @@ class MainWindow(QMainWindow):
         if (fileName != ""):
             self.imagePath = fileName
             pixmap = QPixmap(self.imagePath)
-            self.inputImageLabel.setPixmap(pixmap)
+            self.previewImageLabel.setPixmap(pixmap)
             return True
         else:
             return False
@@ -315,7 +320,6 @@ class MainWindow(QMainWindow):
                                                   os.getcwd(),
                                                   fileFilter)
         if (fileName != ""):
-            
             self.outputPath = fileName
             return True
         else:
@@ -683,7 +687,7 @@ class MainWindow(QMainWindow):
 
     def set_image(self, file_path):
         self.imagePath = file_path
-        self.inputImageLabel.setPixmap(QPixmap(file_path))
+        self.previewImageLabel.setPixmap(QPixmap(file_path))
         
     def runLongTask(self):
         # Step 2: Create a QThread object
