@@ -408,7 +408,7 @@ def make_rotary (im,
     
     # produce the polar gore pattern
     fundus_rotary = make_polar(fundus_swapped_resized, num_gores = num_gores, 
-                          projection = projection)
+                               projection = projection)
     
     # produce the pole cap in the no-cut zone
     fundus_cap = polecap(fundus_swapped_resized, num_gores = num_gores, phi_cap = phi_no_cut)
@@ -421,3 +421,24 @@ def make_rotary (im,
     fundus_rotary.paste(fundus_cap, (horizontal_offset, vertical_offset), fundus_cap)
     
     return fundus_rotary
+
+def make_rotary_adjusted (image_path,
+                          focal_length,
+                          alpha_max,
+                          num_gores,
+                          phi_no_cut,
+                          rotation,
+                          quality,
+                          projection = CASSINI):
+    
+    im = image_from_path(image_path)
+    im = deres_image(im, float(quality / 100))
+    if (rotation > 0):
+        im = rotate_image(im, rotation)
+        
+    return make_rotary (im,
+                        focal_length,
+                        alpha_max,
+                        num_gores,
+                        phi_no_cut,
+                        projection)

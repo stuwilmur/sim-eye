@@ -27,6 +27,7 @@ from time import sleep
 import logging, sys, os
 sys.path.append("../gore")
 import gore2
+from PIL.ImageQt import ImageQt
 from enum import Enum
 
 class State(Enum):
@@ -596,6 +597,7 @@ class MainWindow(QMainWindow):
         elif (self.state == State.CALCULATING or
               self.state == State.CALCULATING_UNSAVED_CHANGES or
               self.state == State.CALCULATING_SAVED_CHANGES):
+            self.previewImageLabel.setPixmap(self.worker.outputPixmap)
             self.transition(State.UNSAVED_CHANGES)
         elif (self.state == State.START or
               self.state == State.END):
@@ -689,11 +691,23 @@ class MainWindow(QMainWindow):
         self.imagePath = file_path
         self.previewImageLabel.setPixmap(QPixmap(file_path))
         
+    def get_inputs(self):
+        # collect the inputs to the calculation as a dict
+        inputs = dict(image_path = self.imagePath, 
+                      focal_length = self.focalLengthValue, 
+                      alpha_max = gore2.deg2rad(self.fundusImageSizeValue), 
+                      num_gores = self.numberOfGoresValue, 
+                      phi_no_cut = gore2.deg2rad(self.noCutAreaValue),
+                      rotation = self.rotationValue,
+                      quality = self.qualityValue
+                      )
+        return inputs
+        
     def runLongTask(self):
         # Step 2: Create a QThread object
         self.thread = QThread()
         # Step 3: Create a worker object
-        self.worker = Worker(self.imagePath)
+        self.worker = Worker(self.get_inputs())
         # Step 4: Move worker to the thread
         self.worker.moveToThread(self.thread)
         # Step 5: Connect signals and slots
@@ -714,13 +728,20 @@ class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
     
-    def __init__(self, imagePath = None):
+    def __init__(self, inputs = None):
         QObject.__init__(self)
         self.complete = True
-        self.imagePath = imagePath
+        self.inputs = inputs
 
     def run(self):
         """This is where we do the goring"""
+        
+        im = gore2.make_rotary_adjusted(**self.inputs)
+        qim = ImageQt(im)
+        pix = QPixmap.fromImage(qim)
+        self.outputPixmap = pix
+        
+        """
         for i in range(5):
             sleep(1)
             logging.debug("calculating: %i", i)
@@ -729,6 +750,7 @@ class Worker(QObject):
                 logging.debug("Calcution CANCELLED")
                 self.complete = False
                 break
+        """
         self.finished.emit()
 
 app = QApplication(sys.argv)
