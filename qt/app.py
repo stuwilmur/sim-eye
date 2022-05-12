@@ -322,12 +322,12 @@ class MainWindow(QMainWindow):
                                                   fileFilter)
         if (fileName != ""):
             self.outputPath = fileName
-            return True
+            return self.save_output()
         else:
             return False
     
     def save_output(self):
-        pass #todo
+        return self.worker.outputPixmap.save(self.outputPath, "PNG")
     
     def start_calculating(self):
         self.runLongTask()
@@ -741,16 +741,15 @@ class Worker(QObject):
         pix = QPixmap.fromImage(qim)
         self.outputPixmap = pix
         
-        """
         for i in range(5):
-            sleep(1)
+            sleep(.1)
             logging.debug("calculating: %i", i)
             self.progress.emit(i + 1)
             if QThread.currentThread().isInterruptionRequested():
                 logging.debug("Calcution CANCELLED")
                 self.complete = False
                 break
-        """
+        
         self.finished.emit()
 
 app = QApplication(sys.argv)
