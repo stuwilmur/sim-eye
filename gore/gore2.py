@@ -12,6 +12,7 @@ import math as mt
 import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage
+from PyQt5.QtCore import QThread
 
 
 """
@@ -419,6 +420,9 @@ def make_rotary (im,
     vertical_offset = round((fundus_rotary.height - fundus_cap.height) / 2)
     horizontal_offset = round((fundus_rotary.width - fundus_cap.width) / 2)
     fundus_rotary.paste(fundus_cap, (horizontal_offset, vertical_offset), fundus_cap)
+    
+    if QThread.currentThread().isInterruptionRequested():
+        pass # todo
     
     return fundus_rotary
 

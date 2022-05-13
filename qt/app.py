@@ -127,13 +127,16 @@ class MainWindow(QMainWindow):
         self.outputPath = None
         
         # control labels
-        self.focalLengthLabel = QLabel("Focal length: {0}\u00b0".format(self.focalLengthValue))
-        self.fundusImageSizeLabel = QLabel("Fundus image size: {0}\u00b0".format(self.fundusImageSizeValue))
-        self.numberOfGoresLabel = QLabel("Number of gores: {0}".format(self.numberOfGoresValue))
-        self.retinalSizeLabel = QLabel("Retinal size: {0}\u00b0".format(self.retinalSizeValue))
-        self.noCutAreaLabel = QLabel("No-cut area: {0}\u00b0".format(self.noCutAreaValue))
-        self.rotationLabel = QLabel("Rotation: {0}\u00b0".format(self.rotationValue * 0.5))
-        self.qualityLabel = QLabel("Quality: {0}%".format(self.qualityValue))
+        self.focalLengthLabel = QLabel("")
+        self.fundusImageSizeLabel = QLabel("")
+        self.numberOfGoresLabel = QLabel("")
+        self.retinalSizeLabel = QLabel("")
+        self.noCutAreaLabel = QLabel("")
+        self.rotationLabel = QLabel("")
+        self.qualityLabel = QLabel("")
+        
+        # update the labels
+        self.update_inputs_text()
 
         # create sliders
         self.focalLengthWidget = QSlider(Qt.Horizontal)
@@ -635,26 +638,30 @@ class MainWindow(QMainWindow):
     def value_changed(self, i):
         # handle updates from the ui elements (sliders)
         if (self.sender() == self.focalLengthWidget):
-            self.focalLengthLabel.setText("Focal length: {0}\u00b0".format(i))
             self.focalLengthValue = i
         elif (self.sender() == self.fundusImageSizeWidget):
-            self.fundusImageSizeLabel.setText("Image extent: {0}\u00b0".format(i))
             self.fundusImageSizeValue = i
         elif (self.sender() == self.numberOfGoresWidget):
-            self.numberOfGoresLabel.setText("No. gores: {0}".format(i))
             self.numberOfGoresValue = i
         elif (self.sender() == self.retinalSizeWidget):
-            self.retinalSizeLabel.setText("Retinal size: {0}\u00b0".format(i))
             self.retinalSizeValue = i
         elif (self.sender() == self.noCutAreaWidget):
-            self.noCutAreaLabel.setText("No-cut area: {0}\u00b0".format(i))
             self.noCutAreaValue = i
         elif (self.sender() == self.rotationWidget):
-            self.rotationLabel.setText("Rotation: {0}\u00b0".format(i * 0.5))
             self.rotationValue = i
         elif (self.sender() == self.qualityWidget):
-            self.qualityLabel.setText("Quality: {0}%".format(i))
             self.qualityValue = i
+            
+        self.update_inputs_text()
+            
+    def update_inputs_text(self):
+        self.focalLengthLabel.setText("Focal length: {0}mm".format(self.focalLengthValue))
+        self.fundusImageSizeLabel.setText("Image extent: {0}\u00b0".format(self.fundusImageSizeValue))
+        self.numberOfGoresLabel.setText("Number of Gores: {0}".format(self.numberOfGoresValue))
+        self.retinalSizeLabel.setText("Retinal size: {0}\u00b0".format(self.retinalSizeValue))
+        self.noCutAreaLabel.setText("No-cut area: {0}\u00b0".format(self.noCutAreaValue))
+        self.rotationLabel.setText("Rotation: {0}\u00b0".format(self.rotationValue * 0.5))
+        self.qualityLabel.setText("Quality: {0}%".format(self.qualityValue))
 
     def slider_position(self, p):
         pass
