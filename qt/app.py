@@ -309,10 +309,7 @@ class MainWindow(QMainWindow):
                                                 os.getcwd(),
                                                 fileFilter)
         if (fileName != ""):
-            self.imagePath = fileName
-            pixmap = QPixmap(self.imagePath)
-            self.previewImageLabel.setPixmap(pixmap)
-            return True
+            return self.set_image(fileName)
         else:
             return False
     
@@ -429,7 +426,8 @@ class MainWindow(QMainWindow):
             # invalid state: do nothing
             pass
         
-    def open_handler(self):
+    def open_handler(self, filePath = None):
+        # open handler: called with filePath from drag and drop 
         if (self.state == State.NO_INPUT or
             self.state == State.READY_TO_GORE):
             if (self.open_image_dialog()):
@@ -437,7 +435,12 @@ class MainWindow(QMainWindow):
             else:
                 self.transition()
         elif (self.state == State.SAVED_CHANGES):
-            if (self.open_image_dialog()):
+            success = False
+            if (filePath != None and self.set_image(filePath)):
+                success == True
+            elif (self.open_image_dialog()):
+                success = True
+            if (success):
                 self.outputPath = None
                 self.transition(State.READY_TO_GORE)
             else:
@@ -688,7 +691,7 @@ class MainWindow(QMainWindow):
         if event.mimeData().hasImage:
             event.setDropAction(Qt.CopyAction)
             file_path = event.mimeData().urls()[0].toLocalFile()
-            self.set_image(file_path)
+            self.open_handler(file_path)
 
             event.accept()
         else:
@@ -697,6 +700,7 @@ class MainWindow(QMainWindow):
     def set_image(self, file_path):
         self.imagePath = file_path
         self.previewImageLabel.setPixmap(QPixmap(file_path))
+        return True # todo return success
         
     def get_inputs(self):
         # collect the inputs to the calculation as a dict
