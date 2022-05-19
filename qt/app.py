@@ -560,6 +560,8 @@ class MainWindow(QMainWindow):
             # invalid state
             self.raise_state_exception()
             
+        self.update_widgets()
+            
     def exit_handler(self):
         if (self.state == State.NO_INPUT or
             self.state == State.READY_TO_GORE or
