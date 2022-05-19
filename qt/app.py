@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QSizePolicy,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QKeySequence
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
 
 from time import sleep
@@ -276,13 +276,17 @@ class MainWindow(QMainWindow):
         fileMenu = menubar.addMenu('File')
 
         # the menu actions - members so they can be updated later
-        self.openAction = QAction('&Open input image...', self)  
-        self.openAction.triggered.connect(self.open_handler) 
+        self.openAction = QAction('&Open input image...', self)
+        self.openAction.setShortcut(QKeySequence.Open)
+        self.openAction.triggered.connect(self.open_handler)
         self.saveAction = QAction('&Save', self)
+        self.saveAction.setShortcut(QKeySequence.Save)
         self.saveAction.triggered.connect(self.save_forwarder)
         self.saveAsAction = QAction('S&ave as...', self)
+        self.saveAsAction.setShortcut(QKeySequence.SaveAs)
         self.saveAsAction.triggered.connect(self.save_as_forwarder)
         self.exitAction = QAction('&Exit', self)
+        self.exitAction.setShortcut(QKeySequence.Quit)
         self.exitAction.triggered.connect(self.exit_handler)
         
         # add the actions
