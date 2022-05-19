@@ -52,7 +52,8 @@ class ImageLabel(QLabel):
         super().__init__()
 
         self.setAlignment(Qt.AlignCenter)
-        self.setText('\n\n {0} \n\n'.format(text))
+        self.text = text
+        self.setText(text)
         self.setStyleSheet('''
             QLabel{
                 border: 2px dashed #aaa;
@@ -75,6 +76,10 @@ class ImageLabel(QLabel):
 
         # set a scaled pixmap to a w x h window keeping its aspect ratio 
         super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio))
+        
+    def clearPixmap(self):
+        self.clear()
+        self.setText(self.text)
 
 class MainWindow(QMainWindow):
     # Class for main window
@@ -160,7 +165,7 @@ class MainWindow(QMainWindow):
         self.goreButtonWidget = QPushButton()
         
         # create input + output image ImageLabel
-        self.previewImageLabel = ImageLabel("Drop image here")
+        self.previewImageLabel = ImageLabel('\n\n {0} \n\n'.format("Drop image here"))
         
         # add sliders and button to LHS
         focalLengthLayout.addWidget(self.focalLengthLabel)
@@ -267,7 +272,6 @@ class MainWindow(QMainWindow):
         self.qualityWidget.sliderMoved.connect(self.slider_position)
         self.qualityWidget.sliderPressed.connect(self.slider_pressed)
         self.qualityWidget.sliderReleased.connect(self.slider_released)
-        
         self.goreButtonWidget.clicked.connect(self.gore_cancel_handler)
         
         # the menubar
@@ -285,6 +289,9 @@ class MainWindow(QMainWindow):
         self.saveAsAction = QAction('S&ave as...', self)
         self.saveAsAction.setShortcut(QKeySequence.SaveAs)
         self.saveAsAction.triggered.connect(self.save_as_forwarder)
+        self.closeAction = QAction('&Close', self)
+        self.closeAction.setShortcut(QKeySequence.Close)
+        self.closeAction.triggered.connect(self.close_handler)
         self.exitAction = QAction('&Exit', self)
         self.exitAction.setShortcut(QKeySequence.Quit)
         self.exitAction.triggered.connect(self.exit_handler)
@@ -293,6 +300,7 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(self.openAction)
         fileMenu.addAction(self.saveAction)
         fileMenu.addAction(self.saveAsAction)
+        fileMenu.addAction(self.closeAction)
         fileMenu.addAction(self.exitAction)
 
         # create "the" widget and set the layout
@@ -358,74 +366,86 @@ class MainWindow(QMainWindow):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("")
         elif (self.state == State.NO_INPUT):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Gore")
         elif (self.state == State.READY_TO_GORE):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
         elif (self.state == State.CALCULATING):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")    
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.CALCULATING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")      
         elif (self.state == State.CANCELLING):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.CANCELLING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.CANCELLING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.UNSAVED_CHANGES):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(True)
             self.saveAsAction.setEnabled(True)
+            self.closeAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
         elif (self.state == State.SAVED_CHANGES):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(True)
             self.saveAsAction.setEnabled(True)
+            self.closeAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
-        elif (self.state == State.UNSAVED_CHANGES):
-            self.openAction.setEnabled(True)
-            self.saveAction.setEnabled(True)
-            self.saveAsAction.setEnabled(True)
-            self.goreButtonWidget.setEnabled(True)
-            self.goreButtonWidget.setText("Gore")
+        elif (self.state == State.END):
+            self.openAction.setEnabled(False)
+            self.saveAction.setEnabled(False)
+            self.saveAsAction.setEnabled(False)
+            self.closeAction.setEnabled(False)
+            self.goreButtonWidget.setEnabled(False)
+            self.goreButtonWidget.setText("")
         else:
             # invalid state: do nothing
             pass
@@ -513,6 +533,32 @@ class MainWindow(QMainWindow):
             self.raise_state_exception()
             
         self.update_widgets()
+        
+    def close_handler(self):
+        if (self.state == State.NO_INPUT or
+            self.state == State.CALCULATING or
+            self.state == State.CALCULATING_SAVED_CHANGES or
+            self.state == State.CALCULATING_UNSAVED_CHANGES or
+            self.state == State.CANCELLING or
+            self.state == State.CANCELLING_SAVED_CHANGES or
+            self.state == State.CANCELLING_UNSAVED_CHANGES or
+            self.state == State.START or
+            self.state == State.END):
+            self.raise_state_exception()
+        elif (self.state == State.READY_TO_GORE or
+              self.state == State.SAVED_CHANGES):
+            self.clear_image()
+            self.transition(State.NO_INPUT)
+        elif (self.state == State.UNSAVED_CHANGES):
+            ret = qm.question(self, '', "Unsaved changes: close and lose changes?", qm.Yes | qm.No)
+            if (ret == qm.Yes):
+                self.clear_image()
+                self.transition(State.NO_INPUT)
+            else:
+                self.transition()
+        else:
+            # invalid state
+            self.raise_state_exception()
             
     def exit_handler(self):
         if (self.state == State.NO_INPUT or
@@ -705,6 +751,10 @@ class MainWindow(QMainWindow):
         self.imagePath = file_path
         self.previewImageLabel.setPixmap(QPixmap(file_path))
         return True # todo return success
+    
+    def clear_image(self):
+        self.imagePath = None
+        self.previewImageLabel.clearPixmap()
         
     def get_inputs(self):
         # collect the inputs to the calculation as a dict
