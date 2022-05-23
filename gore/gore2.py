@@ -396,8 +396,14 @@ def make_rotary (im,
     fundus_equi, lammax, phimax = equi(im = im, 
                           focal_length = focal_length, alpha_max = alpha_max)
     
+    if QThread.currentThread().isInterruptionRequested():
+        return
+    
     # rotate the representation so that the centre of the fundus lies at the "north pole"
     fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax)
+    
+    if QThread.currentThread().isInterruptionRequested():
+        return
     
     # get image sizes
     swapped_height, swapped_width = fundus_swapped.shape[:2]
@@ -407,12 +413,21 @@ def make_rotary (im,
     # [0,2pi] and latitude is in [-pi/2,pi/2]
     fundus_swapped_resized = cv2.resize(fundus_swapped, (swapped_width * 2, swapped_height)) 
     
+    if QThread.currentThread().isInterruptionRequested():
+        return
+    
     # produce the polar gore pattern
     fundus_rotary = make_polar(fundus_swapped_resized, num_gores = num_gores, 
                                projection = projection)
     
+    if QThread.currentThread().isInterruptionRequested():
+        return
+    
     # produce the pole cap in the no-cut zone
     fundus_cap = polecap(fundus_swapped_resized, num_gores = num_gores, phi_cap = phi_no_cut)
+    
+    if QThread.currentThread().isInterruptionRequested():
+        return
     
     # caculate offsets to ensure that the centre of fundus_cap is over the centre of
     # fundus_rotary. In each case this is just the distance to move the top/left corner
@@ -420,9 +435,6 @@ def make_rotary (im,
     vertical_offset = round((fundus_rotary.height - fundus_cap.height) / 2)
     horizontal_offset = round((fundus_rotary.width - fundus_cap.width) / 2)
     fundus_rotary.paste(fundus_cap, (horizontal_offset, vertical_offset), fundus_cap)
-    
-    if QThread.currentThread().isInterruptionRequested():
-        pass # todo
     
     return fundus_rotary
 

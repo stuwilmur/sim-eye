@@ -830,18 +830,14 @@ class Worker(QObject):
         """This is where we do the goring"""
         
         im = gore2.make_rotary_adjusted(**self.inputs)
-        qim = ImageQt(im)
-        pix = QPixmap.fromImage(qim)
-        self.outputPixmap = pix
-        
-        for i in range(5):
-            sleep(.1)
-            logging.debug("calculating: %i", i)
-            self.progress.emit(i + 1)
-            if QThread.currentThread().isInterruptionRequested():
-                logging.debug("Calcution CANCELLED")
-                self.complete = False
-                break
+        if (im == None):
+            logging.debug("Calculation CANCELLED")
+            self.complete = False
+        else:
+            logging.debug("Calculation COMPLETED")
+            qim = ImageQt(im)
+            pix = QPixmap.fromImage(qim)
+            self.outputPixmap = pix
         
         self.finished.emit()
 
