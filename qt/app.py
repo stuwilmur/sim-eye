@@ -453,14 +453,10 @@ class MainWindow(QMainWindow):
     def open_handler(self, filePath = None):
         # open handler: called with filePath from drag and drop 
         if (self.state == State.NO_INPUT or
-            self.state == State.READY_TO_GORE):
-            if (self.open_image_dialog()):
-                self.transition(State.READY_TO_GORE)
-            else:
-                self.transition()
-        elif (self.state == State.SAVED_CHANGES):
+            self.state == State.READY_TO_GORE or
+            self.state == State.SAVED_CHANGES):
             success = False
-            if (filePath != None and self.set_image(filePath)):
+            if (filePath  and self.set_image(filePath)):
                 success == True
             elif (self.open_image_dialog()):
                 success = True
@@ -481,9 +477,14 @@ class MainWindow(QMainWindow):
         elif (self.state == State.UNSAVED_CHANGES):
             ret = qm.question(self,'', "Unsaved changes: open new image and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
-                if (self.open_image_dialog()):
-                    self.transition(State.READY_TO_GORE)
+                success = False
+                if (filePath and self.set_image(filePath)):
+                    success == True
+                elif (self.open_image_dialog()):
+                    success = True
+                if (success):
                     self.outputPath = None
+                    self.transition(State.READY_TO_GORE)
                 else:
                     self.transition()
             else:
