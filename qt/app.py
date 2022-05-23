@@ -88,8 +88,12 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         
-        # setup debugging
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+        # set up debugging
+        if (len(sys.argv) > 1 and sys.argv[1] == "-d"):
+            logLevel = logging.DEBUG
+        else:
+            logLevel = logging.FATAL    
+        logging.basicConfig(stream=sys.stderr, level=logLevel)
         logging.debug('Debugging Gored Sim Eye!')
 
         # window title
@@ -285,7 +289,7 @@ class MainWindow(QMainWindow):
         openIcon = self.style().standardIcon(pixmapi)
         pixmapi = getattr(QStyle, "SP_DialogSaveButton")
         saveIcon = self.style().standardIcon(pixmapi)
-        pixmapi = getattr(QStyle, "SP_FileDialogStart")
+        pixmapi = getattr(QStyle, "SP_DirHomeIcon")
         saveAsIcon = self.style().standardIcon(pixmapi)
         pixmapi = getattr(QStyle, "SP_DialogCloseButton")
         closeIcon = self.style().standardIcon(pixmapi)
