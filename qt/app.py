@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QFileDialog,
                              QToolTip,
                              QSizePolicy,
+                             QStyle,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap, QKeySequence
@@ -278,21 +279,33 @@ class MainWindow(QMainWindow):
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
         fileMenu = menubar.addMenu('File')
+        
+        # create the icons
+        pixmapi = getattr(QStyle, "SP_DialogOpenButton")
+        openIcon = self.style().standardIcon(pixmapi)
+        pixmapi = getattr(QStyle, "SP_DialogSaveButton")
+        saveIcon = self.style().standardIcon(pixmapi)
+        pixmapi = getattr(QStyle, "SP_FileDialogStart")
+        saveAsIcon = self.style().standardIcon(pixmapi)
+        pixmapi = getattr(QStyle, "SP_DialogCloseButton")
+        closeIcon = self.style().standardIcon(pixmapi)
+        pixmapi = getattr(QStyle, "SP_DialogOkButton")
+        exitIcon = self.style().standardIcon(pixmapi)
 
         # the menu actions - members so they can be updated later
-        self.openAction = QAction('&Open input image...', self)
+        self.openAction = QAction(openIcon, '&Open input image...', self)
         self.openAction.setShortcut(QKeySequence.Open)
         self.openAction.triggered.connect(self.open_handler)
-        self.saveAction = QAction('&Save', self)
+        self.saveAction = QAction(saveIcon, '&Save', self)
         self.saveAction.setShortcut(QKeySequence.Save)
         self.saveAction.triggered.connect(self.save_forwarder)
-        self.saveAsAction = QAction('S&ave as...', self)
+        self.saveAsAction = QAction(saveAsIcon, 'S&ave as...', self)
         self.saveAsAction.setShortcut(QKeySequence.SaveAs)
         self.saveAsAction.triggered.connect(self.save_as_forwarder)
-        self.closeAction = QAction('&Close', self)
+        self.closeAction = QAction(closeIcon, '&Close', self)
         self.closeAction.setShortcut(QKeySequence.Close)
         self.closeAction.triggered.connect(self.close_handler)
-        self.exitAction = QAction('&Exit', self)
+        self.exitAction = QAction(exitIcon, '&Exit', self)
         self.exitAction.setShortcut(QKeySequence.Quit)
         self.exitAction.triggered.connect(self.exit_handler)
         
@@ -302,6 +315,14 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(self.saveAsAction)
         fileMenu.addAction(self.closeAction)
         fileMenu.addAction(self.exitAction)
+        
+        # create toolbar and add actions
+        fileToolBar = self.addToolBar("File")
+        fileToolBar.addAction(self.openAction)
+        fileToolBar.addAction(self.saveAction)
+        fileToolBar.addAction(self.saveAsAction)
+        fileToolBar.addAction(self.closeAction)
+        fileToolBar.addAction(self.exitAction)
 
         # create "the" widget and set the layout
         widget = QWidget()
