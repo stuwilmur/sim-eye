@@ -849,9 +849,15 @@ class Worker(QObject):
 
 def main():
     app = QApplication(sys.argv)
+    pixmap = QPixmap("resources/splash.png")
+    print(pixmap.width())
+    splash = QSplashScreen(pixmap)
+    splash.show()
+    app.processEvents()
     
     window = MainWindow()
     window.show()
+    splash.finish(window)
     
     sys.exit( app.exec_() )
     
