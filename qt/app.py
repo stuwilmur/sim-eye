@@ -498,7 +498,12 @@ class MainWindow(QMainWindow):
               self.state == State.CANCELLING_SAVED_CHANGES or
               self.state == State.START or
               self.state == State.END):
-            self.raise_state_exception()
+            if (filePath):
+                # called from drag and drop: allowed but does nothing...
+                self.transition()
+            else:
+                #... otherwise we shouldn't be here
+                self.raise_state_exception()
         elif (self.state == State.UNSAVED_CHANGES):
             ret = qm.question(self,'', "Unsaved changes: open new image and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
