@@ -29,6 +29,7 @@ from time import sleep
 import logging, sys, os
 sys.path.append("../gore")
 import gore2
+import importlib
 from PIL.ImageQt import ImageQt
 from enum import Enum
 
@@ -283,7 +284,8 @@ class MainWindow(QMainWindow):
         # the menubar
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)
-        fileMenu = menubar.addMenu('File')
+        fileMenu = menubar.addMenu('&File')
+        helpMenu = menubar.addMenu('&Help')
         
         # create the icons
         pixmapi = getattr(QStyle, "SP_DialogOpenButton")
@@ -297,7 +299,7 @@ class MainWindow(QMainWindow):
         pixmapi = getattr(QStyle, "SP_DialogOkButton")
         exitIcon = self.style().standardIcon(pixmapi)
 
-        # the menu actions - members so they can be updated later
+        # the file menu actions - members so they can be updated later
         self.openAction = QAction(openIcon, '&Open input image...', self)
         self.openAction.setShortcut(QKeySequence.Open)
         self.openAction.triggered.connect(self.open_handler)
@@ -314,12 +316,19 @@ class MainWindow(QMainWindow):
         self.exitAction.setShortcut(QKeySequence.Quit)
         self.exitAction.triggered.connect(self.exit_handler)
         
-        # add the actions
+        # add the file menu actions
         fileMenu.addAction(self.openAction)
         fileMenu.addAction(self.saveAction)
         fileMenu.addAction(self.saveAsAction)
         fileMenu.addAction(self.closeAction)
         fileMenu.addAction(self.exitAction)
+        
+        # the help menu actions
+        self.aboutAction = QAction('&About', self)
+        self.aboutAction.triggered.connect(self.about_handler)
+        
+        # add the help menu actions
+        helpMenu.addAction(self.aboutAction)
         
         # create toolbar and add actions
         fileToolBar = self.addToolBar("File")
@@ -363,6 +372,12 @@ class MainWindow(QMainWindow):
             return self.save_output()
         else:
             return False
+        
+    def about_dialog(self):
+        msgBox = qm();
+        msgBox.setText("Gore Sim Eye");
+        msgBox.setInformativeText("About this software")
+        msgBox.exec();
     
     def save_output(self):
         return self.worker.outputPixmap.save(self.outputPath, "PNG")
@@ -393,13 +408,15 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
-            self.goreButtonWidget.setEnabled(False)
+            self.aboutAction.setEnabled(False)
+            self.goreButtonWidget.setE
             self.goreButtonWidget.setText("")
         elif (self.state == State.NO_INPUT):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Gore")
         elif (self.state == State.READY_TO_GORE):
@@ -407,6 +424,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(True)
+            self.aboutAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
         elif (self.state == State.CALCULATING):
@@ -414,6 +432,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")    
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
@@ -421,6 +440,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.CALCULATING_SAVED_CHANGES):
@@ -428,6 +448,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")      
         elif (self.state == State.CANCELLING):
@@ -435,6 +456,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.CANCELLING_UNSAVED_CHANGES):
@@ -442,6 +464,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.CANCELLING_SAVED_CHANGES):
@@ -449,6 +472,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancel")
         elif (self.state == State.UNSAVED_CHANGES):
@@ -456,6 +480,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(True)
             self.saveAsAction.setEnabled(True)
             self.closeAction.setEnabled(True)
+            self.aboutAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
         elif (self.state == State.SAVED_CHANGES):
@@ -463,6 +488,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(True)
             self.saveAsAction.setEnabled(True)
             self.closeAction.setEnabled(True)
+            self.aboutAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
         elif (self.state == State.END):
@@ -470,6 +496,7 @@ class MainWindow(QMainWindow):
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
+            self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("")
         else:
@@ -716,6 +743,28 @@ class MainWindow(QMainWindow):
             self.transition(State.UNSAVED_CHANGES)
         elif (self.state == State.CANCELLING_SAVED_CHANGES):
             self.transition(State.SAVED_CHANGES)
+        else:
+            # invalid state
+            self.raise_state_exception()
+            
+        self.update_widgets()
+        
+    def about_handler(self):
+        if (self.state == State.START or
+            self.state == State.CALCULATING or
+            self.state == State.CALCULATING_UNSAVED_CHANGES or
+            self.state == State.CALCULATING_SAVED_CHANGES or
+            self.state == State.CANCELLING or
+            self.state == State.CANCELLING_UNSAVED_CHANGES or
+            self.state == State.CANCELLING_SAVED_CHANGES or
+            self.state == State.END):
+            self.raise_state_exception()
+        elif (self.state == State.NO_INPUT or
+              self.state == State.READY_TO_GORE or
+              self.state == State.UNSAVED_CHANGES or
+              self.state == State.SAVED_CHANGES):
+            self.about_dialog()
+            self.transition()
         else:
             # invalid state
             self.raise_state_exception()
