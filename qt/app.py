@@ -665,11 +665,14 @@ class MainWindow(QMainWindow):
         # handle button press: both gore and cancel
         if (self.state == State.NO_INPUT):
             self.raise_state_exception()
-        elif (self.state == State.READY_TO_GORE or
-              self.state == State.UNSAVED_CHANGES or
-              self.state == State.SAVED_CHANGES):
+        elif (self.state == State.READY_TO_GORE):
             self.transition(State.CALCULATING)
-            self.goreButtonWidget.setText('Cancel')
+            self.start_calculating()
+        elif (self.state == State.UNSAVED_CHANGES):
+            self.transition(State.CALCULATING_UNSAVED_CHANGES)
+            self.start_calculating()
+        elif (self.state == State.SAVED_CHANGES):
+            self.transition(State.CALCULATING_SAVED_CHANGES)
             self.start_calculating()
         elif (self.state == State.CALCULATING): # cancel requested
             self.thread.requestInterruption()
