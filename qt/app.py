@@ -16,22 +16,29 @@ from PyQt5.QtWidgets import (QApplication,
                              QPushButton,
                              QAction, 
                              QFileDialog,
+                             QColorDialog,
                              QToolTip,
                              QSizePolicy,
                              QStyle,
                              QSplashScreen,
+                             QDesktopWidget,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
-from PyQt5.QtGui import QPixmap, QKeySequence
+from PyQt5.QtGui import QPixmap, QKeySequence, QColor
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
 
 from time import sleep
 import logging, sys, os
 sys.path.append("../gore")
-import gore2
 import importlib
 from PIL.ImageQt import ImageQt
 from enum import Enum
+
+aboutText ="""
+About this software
+
+Credits
+"""
 
 class State(Enum):
     # Class defining FSM states
@@ -122,6 +129,7 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout()
 
         # LHS layout
+        
         leftLayout = QVBoxLayout()
         
         # RHS layout
@@ -136,6 +144,7 @@ class MainWindow(QMainWindow):
         self.rotationValue = 0
         self.qualityValue = 20
         self.imagePath = None
+        self.backgroundColour = QColor("white")
         self.outputPath = None
         
         # control labels
@@ -152,12 +161,19 @@ class MainWindow(QMainWindow):
 
         # create sliders
         self.focalLengthWidget = QSlider(Qt.Horizontal)
+        self.focalLengthWidget.setFixedWidth(150)
         self.fundusImageSizeWidget = QSlider(Qt.Horizontal)
+        self.fundusImageSizeWidget.setFixedWidth(150)
         self.numberOfGoresWidget = QSlider(Qt.Horizontal)
+        self.numberOfGoresWidget.setFixedWidth(150)
         self.retinalSizeWidget = QSlider(Qt.Horizontal)
+        self.retinalSizeWidget.setFixedWidth(150)
         self.noCutAreaWidget = QSlider(Qt.Horizontal)
+        self.noCutAreaWidget.setFixedWidth(150)
         self.rotationWidget = QSlider(Qt.Horizontal)
+        self.rotationWidget.setFixedWidth(150)
         self.qualityWidget = QSlider(Qt.Horizontal)
+        self.qualityWidget.setFixedWidth(150)
         
         # create tooltips
         self.focalLengthWidget.setToolTip('This is the focal length')
@@ -313,8 +329,9 @@ class MainWindow(QMainWindow):
         self.closeAction.setShortcut(QKeySequence.Close)
         self.closeAction.triggered.connect(self.close_handler)
         self.exitAction = QAction(exitIcon, '&Exit', self)
-        self.exitAction.setShortcut(QKeySequence.Quit)
         self.exitAction.triggered.connect(self.exit_handler)
+        self.colourAction = QAction('C&hoose background colour...', self)
+        self.colourAction.triggered.connect(self.colour_dialog)
         
         # add the file menu actions
         fileMenu.addAction(self.openAction)
@@ -322,6 +339,7 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(self.saveAsAction)
         fileMenu.addAction(self.closeAction)
         fileMenu.addAction(self.exitAction)
+        fileMenu.addAction(self.colourAction)
         
         # the help menu actions
         self.aboutAction = QAction('&About', self)
@@ -376,8 +394,17 @@ class MainWindow(QMainWindow):
     def about_dialog(self):
         msgBox = qm();
         msgBox.setText("Gore Sim Eye");
-        msgBox.setInformativeText("About this software")
+        msgBox.setInformativeText(aboutText)
         msgBox.exec();
+        
+    def colour_dialog(self):
+        print(self.backgroundColour.name())
+        dialog = QColorDialog(self)
+        dialog.setCurrentColor(self.backgroundColour)
+        if dialog.exec_() == QColorDialog.Accepted:
+            colour = dialog.selectedColor()
+            if colour.isValid():
+                self.backgroundColour = colour
     
     def save_output(self):
         return self.worker.outputPixmap.save(self.outputPath, "PNG")
@@ -840,6 +867,7 @@ class MainWindow(QMainWindow):
     
     def clear_image(self):
         self.imagePath = None
+        self.backgroundColour = QColor("white")
         self.previewImageLabel.clearPixmap()
         
     def get_inputs(self):
@@ -902,12 +930,22 @@ class Worker(QObject):
 def main():
     app = QApplication(sys.argv)
     pixmap = QPixmap("resources/splash.png")
-    print(pixmap.width())
     splash = QSplashScreen(pixmap)
+    
+    # show the splash screen first...
     splash.show()
     app.processEvents()
     
+    # ...then import gore2 at runtime as it is slow
+    loadingString = "loading..."
+    splash.showMessage(loadingString)
+    import gore2
+    
+    loadingString += ("ready")
+    splash.showMessage(loadingString)
+    
     window = MainWindow()
+    window.resize(600,250)
     window.show()
     splash.finish(window)
     
