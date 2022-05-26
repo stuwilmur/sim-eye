@@ -27,18 +27,28 @@ from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap, QKeySequence, QColor
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
 
-from time import sleep
 import logging, sys, os
 sys.path.append("../gore")
-import importlib
 from PIL.ImageQt import ImageQt
 from enum import Enum
+from numpy import pi
 
 aboutText ="""
 About this software
 
 Credits
 """
+
+def deg2rad(x):
+    """
+    deg2rad:    return an angle give in degrees in radians
+
+    x:          angle (degrees)
+    
+    returns:    angle (radians)
+    """
+    
+    return x / 180 * pi
 
 class State(Enum):
     # Class defining FSM states
@@ -874,9 +884,9 @@ class MainWindow(QMainWindow):
         # collect the inputs to the calculation as a dict
         inputs = dict(image_path = self.imagePath, 
                       focal_length = self.focalLengthValue, 
-                      alpha_max = gore2.deg2rad(self.fundusImageSizeValue), 
+                      alpha_max = deg2rad(self.fundusImageSizeValue), 
                       num_gores = self.numberOfGoresValue, 
-                      phi_no_cut = gore2.deg2rad(self.noCutAreaValue),
+                      phi_no_cut = deg2rad(self.noCutAreaValue),
                       rotation = self.rotationValue,
                       quality = self.qualityValue
                       )
@@ -904,6 +914,7 @@ class MainWindow(QMainWindow):
         
 # Worker class
 class Worker(QObject):
+    
     finished = pyqtSignal()
     progress = pyqtSignal(int)
     
@@ -914,7 +925,7 @@ class Worker(QObject):
 
     def run(self):
         """This is where we do the goring"""
-        
+        import gore2
         im = gore2.make_rotary_adjusted(**self.inputs)
         if (im == None):
             logging.debug("Calculation CANCELLED")
@@ -935,11 +946,8 @@ def main():
     # show the splash screen first...
     splash.show()
     app.processEvents()
-    
-    # ...then import gore2 at runtime as it is slow
     loadingString = "loading..."
     splash.showMessage(loadingString)
-    import gore2
     
     loadingString += ("ready")
     splash.showMessage(loadingString)
