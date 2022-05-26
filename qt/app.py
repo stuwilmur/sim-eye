@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (QApplication,
 from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap, QKeySequence, QColor
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
+import qtawesome as qta
 
 import logging, sys, os
 sys.path.append("../gore")
@@ -314,16 +315,11 @@ class MainWindow(QMainWindow):
         helpMenu = menubar.addMenu('&Help')
         
         # create the icons
-        pixmapi = getattr(QStyle, "SP_DialogOpenButton")
-        openIcon = self.style().standardIcon(pixmapi)
-        pixmapi = getattr(QStyle, "SP_DialogSaveButton")
-        saveIcon = self.style().standardIcon(pixmapi)
-        pixmapi = getattr(QStyle, "SP_DirHomeIcon")
-        saveAsIcon = self.style().standardIcon(pixmapi)
-        pixmapi = getattr(QStyle, "SP_DialogCloseButton")
-        closeIcon = self.style().standardIcon(pixmapi)
-        pixmapi = getattr(QStyle, "SP_DialogOkButton")
-        exitIcon = self.style().standardIcon(pixmapi)
+        openIcon = qta.icon('fa5s.folder-open')
+        saveIcon = qta.icon('fa5s.save')
+        saveAsIcon = qta.icon('fa5s.edit')
+        closeIcon = qta.icon('fa5s.window-close')
+        exitIcon = qta.icon('fa.sign-out')
 
         # the file menu actions - members so they can be updated later
         self.openAction = QAction(openIcon, '&Open input image...', self)
