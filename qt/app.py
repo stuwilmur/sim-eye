@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
         self.rotationValue = 0
         self.qualityValue = 20
         self.imagePath = None
-        self.backgroundColour = QColor("white")
+        self.backgroundColour = QColor("white") # never reset; lost on exit
         self.outputPath = None
         
         # control labels
@@ -315,11 +315,12 @@ class MainWindow(QMainWindow):
         helpMenu = menubar.addMenu('&Help')
         
         # create the icons
-        openIcon = qta.icon('fa5s.folder-open')
-        saveIcon = qta.icon('fa5s.save')
-        saveAsIcon = qta.icon('fa5s.edit')
-        closeIcon = qta.icon('fa5s.window-close')
-        exitIcon = qta.icon('fa.sign-out')
+        openIcon = qta.icon('mdi.folder-open')
+        saveIcon = qta.icon('mdi.content-save')
+        saveAsIcon = qta.icon('mdi.content-save-edit')
+        closeIcon = qta.icon('mdi.close')
+        exitIcon = qta.icon('mdi.exit-run')
+        colourIcon = qta.icon('mdi.palette')
 
         # the file menu actions - members so they can be updated later
         self.openAction = QAction(openIcon, '&Open input image...', self)
@@ -336,7 +337,7 @@ class MainWindow(QMainWindow):
         self.closeAction.triggered.connect(self.close_handler)
         self.exitAction = QAction(exitIcon, '&Exit', self)
         self.exitAction.triggered.connect(self.exit_handler)
-        self.colourAction = QAction('C&hoose background colour...', self)
+        self.colourAction = QAction(colourIcon, 'C&hoose background colour...', self)
         self.colourAction.triggered.connect(self.colour_dialog)
         
         # add the file menu actions
@@ -361,6 +362,7 @@ class MainWindow(QMainWindow):
         fileToolBar.addAction(self.saveAsAction)
         fileToolBar.addAction(self.closeAction)
         fileToolBar.addAction(self.exitAction)
+        fileToolBar.addAction(self.colourAction)
 
         # create "the" widget and set the layout
         widget = QWidget()
@@ -491,7 +493,7 @@ class MainWindow(QMainWindow):
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
-            self.goreButtonWidget.setText("Cancel")
+            self.goreButtonWidget.setText("Cancelling...")
         elif (self.state == State.CANCELLING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -499,7 +501,7 @@ class MainWindow(QMainWindow):
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
-            self.goreButtonWidget.setText("Cancel")
+            self.goreButtonWidget.setText("Cancelling...")
         elif (self.state == State.CANCELLING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -507,7 +509,7 @@ class MainWindow(QMainWindow):
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
-            self.goreButtonWidget.setText("Cancel")
+            self.goreButtonWidget.setText("Cancelling...")
         elif (self.state == State.UNSAVED_CHANGES):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(True)
@@ -873,7 +875,6 @@ class MainWindow(QMainWindow):
     
     def clear_image(self):
         self.imagePath = None
-        self.backgroundColour = QColor("white")
         self.previewImageLabel.clearPixmap()
         
     def get_inputs(self):
