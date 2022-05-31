@@ -22,10 +22,12 @@ from PyQt5.QtWidgets import (QApplication,
                              QStyle,
                              QSplashScreen,
                              QDesktopWidget,
+                             QStatusBar,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap, QKeySequence, QColor
-from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 import qtawesome as qta
 
 import logging, sys, os
@@ -66,6 +68,22 @@ class State(Enum):
     SAVED_CHANGES               = 10
     END                         = 11
     NUMBER_OF_STATES            = 12
+
+class Browser(QWebEngineView):
+    def __init__(self):
+        super().__init__()
+        self.loadProgress.connect(print)
+        dirPath = os.path.dirname(os.path.realpath(__file__))
+        guidePath = os.path.join(dirPath,"userguide.html")
+        print (guidePath)
+        self.load(QUrl.fromLocalFile(guidePath))
+        self.loadFinished.connect(self.pageReady)
+
+    def pageReady(self, success):
+        if success:
+            self.resize(640, 480)
+        else:
+            logging.debug('Browser: page failed to load')
 
 class ImageLabel(QLabel):
     # Class to display image preview windows
@@ -115,9 +133,19 @@ class MainWindow(QMainWindow):
             logLevel = logging.FATAL    
         logging.basicConfig(stream=sys.stderr, level=logLevel)
         logging.debug('Debugging Gored Sim Eye!')
+        
+        self.browser = Browser()
 
         # window title
         self.setWindowTitle("Gored Sim Eye")
+        
+        # status bar
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
+        
+        self.statusLabel = QLabel()
+        self.statusBar.addPermanentWidget(self.statusLabel, 100)
+        self.statusLabel.setText('wow such label')
         
         # define thread and worker objects
         self.thread = None
@@ -349,10 +377,13 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(self.colourAction)
         
         # the help menu actions
+        self.userGuideAction = QAction('&User guide...', self)
+        self.userGuideAction.triggered.connect(self.user_guide_forwarder)
         self.aboutAction = QAction('&About', self)
-        self.aboutAction.triggered.connect(self.about_handler)
+        self.aboutAction.triggered.connect(self.about_forwarder)
         
         # add the help menu actions
+        helpMenu.addAction(self.userGuideAction)
         helpMenu.addAction(self.aboutAction)
         
         # create toolbar and add actions
@@ -406,7 +437,6 @@ class MainWindow(QMainWindow):
         msgBox.exec();
         
     def colour_dialog(self):
-        print(self.backgroundColour.name())
         dialog = QColorDialog(self)
         dialog.setCurrentColor(self.backgroundColour)
         if dialog.exec_() == QColorDialog.Accepted:
@@ -444,96 +474,120 @@ class MainWindow(QMainWindow):
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setE
             self.goreButtonWidget.setText("")
+            self.statusLabel.setText("")
         elif (self.state == State.NO_INPUT):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(True)
+            self.userGuideAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Gore")
+            self.statusLabel.setText("No input image selected")
         elif (self.state == State.READY_TO_GORE):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(True)
             self.aboutAction.setEnabled(True)
+            self.userGuideAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
+            self.statusLabel.setText("Ready to gore")
         elif (self.state == State.CALCULATING):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
-            self.goreButtonWidget.setText("Cancel")    
+            self.goreButtonWidget.setText("Cancel")  
+            self.statusLabel.setText("Calculating")  
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")
+            self.statusLabel.setText("Calculating")
         elif (self.state == State.CALCULATING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
-            self.goreButtonWidget.setText("Cancel")      
+            self.goreButtonWidget.setText("Cancel") 
+            self.statusLabel.setText("Calculating")     
         elif (self.state == State.CANCELLING):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancelling...")
+            self.statusLabel.setText("Cancelling")
         elif (self.state == State.CANCELLING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancelling...")
+            self.statusLabel.setText("Cancelling")
         elif (self.state == State.CANCELLING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancelling...")
+            self.statusLabel.setText("Cancelling")
         elif (self.state == State.UNSAVED_CHANGES):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(True)
             self.saveAsAction.setEnabled(True)
             self.closeAction.setEnabled(True)
             self.aboutAction.setEnabled(True)
+            self.userGuideAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
+            self.statusLabel.setText("Unsaved changes")
         elif (self.state == State.SAVED_CHANGES):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(True)
             self.saveAsAction.setEnabled(True)
             self.closeAction.setEnabled(True)
             self.aboutAction.setEnabled(True)
+            self.userGuideAction.setEnabled(True)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
+            self.statusLabel.setText("Saved changes")
         elif (self.state == State.END):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
             self.saveAsAction.setEnabled(False)
             self.closeAction.setEnabled(False)
             self.aboutAction.setEnabled(False)
+            self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("")
+            self.statusLabel.setText("End")
         else:
             # invalid state: do nothing
             pass
@@ -787,7 +841,13 @@ class MainWindow(QMainWindow):
             
         self.update_widgets()
         
-    def about_handler(self):
+    def about_forwarder(self):
+        self.help_handler(False)
+        
+    def user_guide_forwarder(self):
+        self.help_handler(True)
+        
+    def help_handler(self, userGuide = False):
         if (self.state == State.START or
             self.state == State.CALCULATING or
             self.state == State.CALCULATING_UNSAVED_CHANGES or
@@ -801,7 +861,11 @@ class MainWindow(QMainWindow):
               self.state == State.READY_TO_GORE or
               self.state == State.UNSAVED_CHANGES or
               self.state == State.SAVED_CHANGES):
-            self.about_dialog()
+            if (userGuide):
+                self.browser.show()
+            else: # about
+                self.about_dialog()
+                
             self.transition()
         else:
             # invalid state
