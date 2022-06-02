@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (QApplication,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap, QKeySequence, QColor
-from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, QUrl
+from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, QUrl, QTimer
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 import qtawesome as qta
 
@@ -1030,9 +1030,10 @@ def main():
     splash.showMessage(loadingString)
     
     window = MainWindow()
+    # close the splash screen after waiting one second (in addition to load time)
+    QTimer.singleShot(1000, lambda: splash.finish(window))
     window.resize(600,250)
     window.show()
-    splash.finish(window)
     
     sys.exit( app.exec_() )
     
