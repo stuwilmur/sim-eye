@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QHBoxLayout, 
                              QVBoxLayout,
                              QSlider, 
+                             QDoubleSpinBox,
                              QLabel, 
                              QPushButton,
                              QAction, 
@@ -107,13 +108,16 @@ class ImageLabel(QLabel):
         return width
 
     def setPixmap(self, image):
+        self.clear()
         super().setPixmap(image)
-        w = super().width()
-        h = super().height()
+        growthCorrectionInPixels = 4
+        w = super().width() - growthCorrectionInPixels
+        h = super().height() - growthCorrectionInPixels
         
         super().setScaledContents(1)
 
-        # set a scaled pixmap to a w x h window keeping its aspect ratio 
+        # set a scaled pixmap to a w x h window keeping its aspect ratio
+        print(w,h,"%%%")
         super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio))
         
     def clearPixmap(self):
@@ -209,8 +213,8 @@ class MainWindow(QMainWindow):
         self.retinalSizeWidget.setFixedWidth(150)
         self.noCutAreaWidget = QSlider(Qt.Horizontal)
         self.noCutAreaWidget.setFixedWidth(150)
-        self.rotationWidget = QSlider(Qt.Horizontal)
-        self.rotationWidget.setFixedWidth(150)
+        self.rotationWidget = QDoubleSpinBox()
+        self.rotationWidget.setGeometry(100, 100, 150, 40)
         self.qualityWidget = QSlider(Qt.Horizontal)
         self.qualityWidget.setFixedWidth(150)
         
@@ -227,7 +231,7 @@ class MainWindow(QMainWindow):
         self.goreButtonWidget = QPushButton()
         
         # create input + output image ImageLabel
-        self.previewImageLabel = ImageLabel('\n\n {0} \n\n'.format("Drop image here"))
+        self.previewImageLabel = ImageLabel('\n\n {0} \n\n {1}'.format("Drop image here", "Image must be square and centred"))
         
         # add sliders and button to LHS
         focalLengthLayout.addWidget(self.focalLengthLabel)
@@ -284,11 +288,14 @@ class MainWindow(QMainWindow):
         self.noCutAreaWidget.setRange(0,90)
         self.noCutAreaWidget.setSingleStep(1)
         
-        self.rotationWidget.setRange(0,720)
-        self.rotationWidget.setSingleStep(1)
-        
         self.qualityWidget.setRange(10,100)
         self.qualityWidget.setSingleStep(1)
+        
+        # set up the spinbox
+        self.rotationWidget.setSuffix("\u00b0")
+        self.rotationWidget.setSingleStep(0.5)
+        self.rotationWidget.setMaximum(360)
+        self.rotationWidget.setMinimum(-360)
         
         # initial values
         self.focalLengthWidget.setValue(self.focalLengthValue)
@@ -326,9 +333,6 @@ class MainWindow(QMainWindow):
         self.noCutAreaWidget.sliderReleased.connect(self.slider_released)
         
         self.rotationWidget.valueChanged.connect(self.value_changed)
-        self.rotationWidget.sliderMoved.connect(self.slider_position)
-        self.rotationWidget.sliderPressed.connect(self.slider_pressed)
-        self.rotationWidget.sliderReleased.connect(self.slider_released)
         
         self.qualityWidget.valueChanged.connect(self.value_changed)
         self.qualityWidget.sliderMoved.connect(self.slider_position)
@@ -898,7 +902,7 @@ class MainWindow(QMainWindow):
         self.numberOfGoresLabel.setText("Number of Gores: {0}".format(self.numberOfGoresValue))
         self.retinalSizeLabel.setText("Retinal size: {0}\u00b0".format(self.retinalSizeValue))
         self.noCutAreaLabel.setText("No-cut area: {0}\u00b0".format(self.noCutAreaValue))
-        self.rotationLabel.setText("Rotation: {0}\u00b0".format(self.rotationValue * 0.5))
+        self.rotationLabel.setText("Rotation:")
         self.qualityLabel.setText("Quality: {0}%".format(self.qualityValue))
 
     def slider_position(self, p):
@@ -995,6 +999,7 @@ class Worker(QObject):
             logging.debug("Calculation COMPLETED")
             qim = ImageQt(im)
             pix = QPixmap.fromImage(qim)
+            logging.debug("Returned image has size {0}px x {1}px".format(pix.width(), pix.height()))
             self.outputPixmap = pix
         
         self.finished.emit()
