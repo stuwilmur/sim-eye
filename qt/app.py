@@ -804,7 +804,7 @@ class MainWindow(QMainWindow):
         elif (i == 2):
             self.statusLabel.setText("Projecting")
         elif (i == 3):
-            self.statusLabel.setText("Projectiong at pole")
+            self.statusLabel.setText("Projecting at pole")
             
     def calculation_complete_handler(self):
         if (self.state == State.NO_INPUT or
@@ -1030,7 +1030,7 @@ def main():
     splash.showMessage(loadingString)
     
     window = MainWindow()
-    # close the splash screen after waiting one second (in addition to load time)
+    # close the splash screen after waiting 1s (in addition to load time)
     QTimer.singleShot(1000, lambda: splash.finish(window))
     window.resize(600,250)
     window.show()
