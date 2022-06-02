@@ -73,10 +73,9 @@ class State(Enum):
 class Browser(QWebEngineView):
     def __init__(self):
         super().__init__()
-        self.loadProgress.connect(print)
+        self.loadProgress.connect(logging.debug)
         dirPath = os.path.dirname(os.path.realpath(__file__))
         guidePath = os.path.join(dirPath,"userguide.html")
-        print (guidePath)
         self.load(QUrl.fromLocalFile(guidePath))
         self.loadFinished.connect(self.pageReady)
 
@@ -117,7 +116,6 @@ class ImageLabel(QLabel):
         super().setScaledContents(1)
 
         # set a scaled pixmap to a w x h window keeping its aspect ratio
-        print(w,h,"%%%")
         super().setPixmap(image.scaled(w, h, Qt.KeepAspectRatio))
         
     def clearPixmap(self):
@@ -149,7 +147,7 @@ class MainWindow(QMainWindow):
         
         self.statusLabel = QLabel()
         self.statusBar.addPermanentWidget(self.statusLabel, 100)
-        self.statusLabel.setText('wow such label')
+        self.statusLabel.setText('')
         
         # define thread and worker objects
         self.thread = None
@@ -797,6 +795,17 @@ class MainWindow(QMainWindow):
         else:
             self.calculation_cancelled_handler()
             
+    def progress_handler(self, i):
+        logging.debug ("Calculation progress: {0}".format(i))
+        if (i == 0):
+            self.statusLabel.setText("Calculating eye coordinates")
+        elif (i == 1):
+            self.statusLabel.setText("Rotating projection")
+        elif (i == 2):
+            self.statusLabel.setText("Projecting")
+        elif (i == 3):
+            self.statusLabel.setText("Projectiong at pole")
+            
     def calculation_complete_handler(self):
         if (self.state == State.NO_INPUT or
             self.state == State.READY_TO_GORE or
@@ -953,7 +962,7 @@ class MainWindow(QMainWindow):
                       num_gores = self.numberOfGoresValue, 
                       phi_no_cut = deg2rad(self.noCutAreaValue),
                       rotation = self.rotationValue,
-                      quality = self.qualityValue
+                      quality = self.qualityValue,
                       )
         return inputs
         
@@ -969,6 +978,7 @@ class MainWindow(QMainWindow):
         self.worker.finished.connect(self.thread.quit)
         self.worker.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.progress.connect(self.progress_handler)
         # Step 6: Start the thread
         self.thread.start()
 
@@ -991,6 +1001,7 @@ class Worker(QObject):
     def run(self):
         """This is where we do the goring"""
         import gore2
+        gore2.signal = self.progress
         im = gore2.make_rotary_adjusted(**self.inputs)
         if (im == None):
             logging.debug("Calculation CANCELLED")

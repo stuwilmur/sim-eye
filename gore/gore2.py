@@ -12,7 +12,8 @@ import math as mt
 import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtBoundSignal
+from enum import Enum
 
 
 """
@@ -26,9 +27,21 @@ sec = lambda z : 1 / mt.cos(z)
 """
 constants: projection options
 """
-SINUSOIDAL = 0
-CASSINI = 1
-ORTHOGRAPHIC = 2
+class Projection(Enum):
+    SINUSOIDAL = 0
+    CASSINI = 1
+    ORTHOGRAPHIC = 2
+    
+class Progress(Enum):
+    EQUI = 0
+    SWAP = 1
+    POLAR = 2
+    POLECAP = 3
+
+"""
+Global pyqtBoundSignal, used to emit calculation progress information
+"""
+signal = None
 
 
 def fig(img):
@@ -131,7 +144,7 @@ def make_equatorial (im,
                     lam_min = -mt.pi, 
                     lam_max = mt.pi,
                     phi_cap = mt.pi / 2,
-                    projection = CASSINI):
+                    projection = Projection.CASSINI):
     """
     make_equatorial returns an image that can be used as a gore net
     
@@ -166,10 +179,10 @@ def make_equatorial (im,
     # do the appropriate projection (note, we use the reverse projection, i.e. 
     # for every coordinate in the destination image, calculate its corresponding
     # position in the source image.
-    if projection == SINUSOIDAL:
+    if projection == Projection.SINUSOIDAL:
         lam_src = ((lam_dst - lam0) / np.cos(phi_dst)) + lam0
         phi_src = phi_dst
-    elif projection == ORTHOGRAPHIC:
+    elif projection == Projection.ORTHOGRAPHIC:
         x = (lam_dst - lam0)
         y = phi_dst
         rho = np.sqrt(np.square(x) + np.square(y))
@@ -207,7 +220,7 @@ def make_polar (im,
                phi_max = mt.pi / 2, 
                lam_min = -mt.pi, 
                lam_max = mt.pi,
-               projection = CASSINI):
+               projection = Projection.CASSINI):
     
     # demand that the pole is included if the gores are to be stitched at the pole
     phi_min = -mt.pi / 2
@@ -364,7 +377,7 @@ def polecap (im,
     swapped = swap(im = im, lam_extent = lam_extent, phi_extent = phi_extent)
     
     # perform the orthographic projection
-    output  = make_equatorial(swapped, num_gores = 1, phi_cap = phi_cap, projection = ORTHOGRAPHIC)
+    output  = make_equatorial(swapped, num_gores = 1, phi_cap = phi_cap, projection = Projection.ORTHOGRAPHIC)
     
     # convert to PIL.Image
     polecap = nd2im(output)
@@ -380,7 +393,7 @@ def make_rotary (im,
                 alpha_max, 
                 num_gores,   
                 phi_no_cut,
-                projection = CASSINI):
+                projection = Projection.CASSINI):
     """
     make_rotary      master function to produce a gore net stitched at the pole
     
@@ -392,6 +405,9 @@ def make_rotary (im,
     phi_no_cut:      angle of "no-cut zone" (radians)
     """
     
+    if (isinstance(signal, pyqtBoundSignal)):
+        signal.emit(Progress.EQUI.value)
+    
     # create the equirectangular (plate-caree) representation of the fundus
     fundus_equi, lammax, phimax = equi(im = im, 
                           focal_length = focal_length, alpha_max = alpha_max)
@@ -399,11 +415,17 @@ def make_rotary (im,
     if QThread.currentThread().isInterruptionRequested():
         return
     
+    if (isinstance(signal, pyqtBoundSignal)):
+        signal.emit(Progress.SWAP.value)
+    
     # rotate the representation so that the centre of the fundus lies at the "north pole"
     fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax)
     
     if QThread.currentThread().isInterruptionRequested():
         return
+    
+    if (isinstance(signal, pyqtBoundSignal)):
+        signal.emit(Progress.POLAR.value)
     
     # get image sizes
     swapped_height, swapped_width = fundus_swapped.shape[:2]
@@ -422,6 +444,9 @@ def make_rotary (im,
     
     if QThread.currentThread().isInterruptionRequested():
         return
+    
+    if (isinstance(signal, pyqtBoundSignal)):
+        signal.emit(Progress.POLECAP.value)
     
     # produce the pole cap in the no-cut zone
     fundus_cap = polecap(fundus_swapped_resized, num_gores = num_gores, phi_cap = phi_no_cut)
@@ -445,7 +470,7 @@ def make_rotary_adjusted (image_path,
                           phi_no_cut,
                           rotation,
                           quality,
-                          projection = CASSINI):
+                          projection = Projection.CASSINI):
     
     im = image_from_path(image_path)
     im = deres_image(im, float(quality / 100))
