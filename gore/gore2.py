@@ -179,6 +179,7 @@ def make_equatorial (im,
     lam_max:        maximum longitude (radians)
     phi_cap:        angular size of pole cap (radians)
     alpha_limit:    no goring beyond this angle (radians)
+    projection:     projection to use (Projection class)
     
     returns:        image (ndarray)  
     """
@@ -216,12 +217,16 @@ def make_equatorial (im,
         phi_src += rho_max
         lam_src += rho_max
     else: # Cassini
-        lam_src = lam0 + np.arctan2(np.tan(lam_dst-lam0),np.cos(phi_dst))
-        phi_src = np.arcsin(np.sin(phi_dst) * np.cos(lam_dst-lam0))
+        lam_src = lam0 + np.arctan2(np.tan(lam_dst - lam0), np.cos(phi_dst))
+        phi_src = np.arcsin(np.sin(phi_dst) * np.cos(lam_dst - lam0))
     
     # limit each projection to within its own gore
     lam_src = lam_src + np.array(np.greater(lam_src, lam0 + gore_width / 2) * 1000, dtype = np.float32)
     lam_src = lam_src + np.array(np.less(lam_src, lam0 - gore_width / 2) * -1000, dtype = np.float32)
+    
+    # apply the alpha limit
+    alpha_limit = deg2rad(90)
+    phi_src = phi_src + np.array(np.greater(phi_src, alpha_limit - np.pi / 2) * 1000, dtype = np.float32)
     
     # convert polar coordinates back to source pixels
     y_src = (phi_src - phi_min) * h / (phi_max - phi_min)
@@ -244,6 +249,19 @@ def make_polar (im,
                lam_min = -mt.pi, 
                lam_max = mt.pi,
                projection = Projection.CASSINI):
+    """
+    make_polar returns an image stitched at the pole that may be used a gore net
+    
+    im:             input image (ndarray)
+    num_gores:      number of gores (integer)
+    phi_min:        minimum latitude (radians)    
+    phi_max:        maximum latitude (radians)
+    lam_min:        minimum longitude (radians)    
+    lam_max:        maximum longitude (radians)
+    projection:     projection to use (Projection class)
+    
+    returns:        output image (PIL.Image)
+    """
     
     # demand that the pole is included if the gores are to be stitched at the pole
     phi_min = -mt.pi / 2
@@ -494,6 +512,20 @@ def make_rotary_adjusted (image_path,
                           rotation,
                           quality,
                           projection = Projection.CASSINI):
+    """
+    make_rotary_adjusted      master function to produce a gore net stitched at
+                              the pole, specifying desired quality and rotation
+    
+    im:              input image path
+    focal_length:    focal length (mm)
+    alpha_max:       angular size of the image from the centre (radians)
+    num_gores:       number of gores (integer)
+    alpha_limit:     angular extent of gored region
+    phi_no_cut:      angle of "no-cut zone" (radians)
+    rotation:        angle of rotation (radians)
+    quality:         image quality (percentage)
+    projection:      map projection to use (Projection class)
+    """
     
     im = image_from_path(image_path)
     im = deres_image(im, float(quality / 100))
