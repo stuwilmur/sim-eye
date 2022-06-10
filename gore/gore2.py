@@ -80,14 +80,21 @@ def rotate_image(image, rotate_angle):
     
     rotate_angle:    angle of rotation (degrees)
     """
-    
-    originalSize = image.shape[:2]
+    originalHeight, originalWidth = image.shape[:2]
     
     rotatedImage = ndimage.rotate(image, rotate_angle)
     
-    resizedImage = cv2.resize(rotatedImage, originalSize, interpolation = cv2.INTER_LINEAR)
+    rotatedHeight, rotatedWidth = rotatedImage.shape[:2]
     
-    return resizedImage
+    innerSquareSize = rotatedHeight / (np.sin(deg2rad(rotate_angle)) + np.cos(deg2rad(rotate_angle)))
+    
+    c = round(0.5 * (rotatedHeight - innerSquareSize))
+    
+    croppedRotatedImage = rotatedImage[c : rotatedHeight - c, c : rotatedWidth - c, :]
+    
+    resizedCroppedRotatedImage = cv2.resize(croppedRotatedImage, (originalHeight, originalWidth), interpolation = cv2.INTER_LINEAR)
+    
+    return resizedCroppedRotatedImage
 
 
 def deres_image(image, factor):
