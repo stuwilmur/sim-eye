@@ -81,7 +81,13 @@ def rotate_image(image, rotate_angle):
     rotate_angle:    angle of rotation (degrees)
     """
     
-    return ndimage.rotate(image, rotate_angle)
+    originalSize = image.shape[:2]
+    
+    rotatedImage = ndimage.rotate(image, rotate_angle)
+    
+    resizedImage = cv2.resize(rotatedImage, originalSize, interpolation = cv2.INTER_LINEAR)
+    
+    return resizedImage
 
 
 def deres_image(image, factor):
@@ -96,7 +102,7 @@ def deres_image(image, factor):
     
     down_points = (round(factor * height), round(factor * width))
     
-    resized_down = cv2.resize(image, down_points, interpolation= cv2.INTER_LINEAR)
+    resized_down = cv2.resize(image, down_points, interpolation = cv2.INTER_LINEAR)
     
     return resized_down
 
