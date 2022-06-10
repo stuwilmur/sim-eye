@@ -18,11 +18,8 @@ from PyQt5.QtWidgets import (QApplication,
                              QAction, 
                              QFileDialog,
                              QColorDialog,
-                             QToolTip,
                              QSizePolicy,
-                             QStyle,
                              QSplashScreen,
-                             QDesktopWidget,
                              QStatusBar,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
@@ -274,7 +271,7 @@ class MainWindow(QMainWindow):
         self.focalLengthWidget.setRange(5,50)
         self.focalLengthWidget.setSingleStep(1)
         
-        self.fundusImageSizeWidget.setRange(5,100)
+        self.fundusImageSizeWidget.setRange(5,90)
         self.fundusImageSizeWidget.setSingleStep(1)
         
         self.numberOfGoresWidget.setRange(3,24)
