@@ -79,6 +79,8 @@ def rotate_image(image, rotate_angle):
     image:           the image (ndarray)
     
     rotate_angle:    angle of rotation (degrees)
+    
+    returns          image array (ndarray)
     """
     originalHeight, originalWidth = image.shape[:2]
     
@@ -86,12 +88,18 @@ def rotate_image(image, rotate_angle):
     
     rotatedHeight, rotatedWidth = rotatedImage.shape[:2]
     
-    innerSquareSize = rotatedHeight / (np.sin(deg2rad(rotate_angle)) + np.cos(deg2rad(rotate_angle)))
     
+    # SciPy will resize the source image so that, once rotated, it fits tightly
+    # within the original image dimensions: this means that the original image
+    # appears as a rotated square with triangular background regions. We must
+    # crop the resulting image so that it is tight on the original image square.
+    theta = rotate_angle % 90
+    innerSquareSize = rotatedHeight / (np.sin(deg2rad(theta)) + np.cos(deg2rad(theta)))
     c = round(0.5 * (rotatedHeight - innerSquareSize))
     
     croppedRotatedImage = rotatedImage[c : rotatedHeight - c, c : rotatedWidth - c, :]
     
+    # resize again to leave the original image size unchanged
     resizedCroppedRotatedImage = cv2.resize(croppedRotatedImage, (originalHeight, originalWidth), interpolation = cv2.INTER_LINEAR)
     
     return resizedCroppedRotatedImage
@@ -102,6 +110,8 @@ def deres_image(image, factor):
     image:            the image (ndarray)
     
     factor:           factor by which to resize (float)
+    
+    returns             image array (ndarray)
     """
     
     # get image sizes
