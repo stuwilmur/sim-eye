@@ -167,6 +167,7 @@ def make_equatorial (im,
                     lam_min = -mt.pi, 
                     lam_max = mt.pi,
                     phi_cap = mt.pi / 2,
+                    alpha_limit = mt.pi,
                     projection = Projection.CASSINI):
     """
     make_equatorial returns an image that can be used as a gore net
@@ -225,8 +226,7 @@ def make_equatorial (im,
     lam_src = lam_src + np.array(np.less(lam_src, lam0 - gore_width / 2) * -1000, dtype = np.float32)
     
     # apply the alpha limit
-    alpha_limit = deg2rad(90)
-    phi_src = phi_src + np.array(np.greater(phi_src, alpha_limit - np.pi / 2) * 1000, dtype = np.float32)
+    phi_src = phi_src + np.array(np.greater(phi_src, alpha_limit - mt.pi / 2) * 1000, dtype = np.float32)
     
     # convert polar coordinates back to source pixels
     y_src = (phi_src - phi_min) * h / (phi_max - phi_min)
@@ -248,6 +248,7 @@ def make_polar (im,
                phi_max = mt.pi / 2, 
                lam_min = -mt.pi, 
                lam_max = mt.pi,
+               alpha_limit = mt.pi,
                projection = Projection.CASSINI):
     """
     make_polar returns an image stitched at the pole that may be used a gore net
@@ -258,6 +259,7 @@ def make_polar (im,
     phi_max:        maximum latitude (radians)
     lam_min:        minimum longitude (radians)    
     lam_max:        maximum longitude (radians)
+    alpha_limit:    angular extent of gored region
     projection:     projection to use (Projection class)
     
     returns:        output image (PIL.Image)
@@ -282,7 +284,8 @@ def make_polar (im,
                                            phi_min = phi_min, 
                                            phi_max = phi_max, 
                                            lam_min = lam_min,
-                                           lam_max = lam_max, 
+                                           lam_max = lam_max,
+                                           alpha_limit = alpha_limit,
                                            projection = projection)
     
     # convert to PIL.Image
@@ -434,6 +437,7 @@ def make_rotary (im,
                 alpha_max, 
                 num_gores,   
                 phi_no_cut,
+                alpha_limit = mt.pi,
                 projection = Projection.CASSINI):
     """
     make_rotary      master function to produce a gore net stitched at the pole
@@ -444,6 +448,8 @@ def make_rotary (im,
     num_gores:       number of gores (integer)
     projection:      projection to use (constant)
     phi_no_cut:      angle of "no-cut zone" (radians)
+    alpha_limit:     angular extent of gored region
+    projection:      projection to use (Projection class)
     """
     
     if (isinstance(signal, pyqtBoundSignal)):
@@ -480,7 +486,7 @@ def make_rotary (im,
         return
     
     # produce the polar gore pattern
-    fundus_rotary = make_polar(fundus_swapped_resized, num_gores = num_gores, 
+    fundus_rotary = make_polar(fundus_swapped_resized, num_gores = num_gores, alpha_limit = alpha_limit, 
                                projection = projection)
     
     if QThread.currentThread().isInterruptionRequested():
@@ -511,6 +517,7 @@ def make_rotary_adjusted (image_path,
                           phi_no_cut,
                           rotation,
                           quality,
+                          alpha_limit = mt.pi,
                           projection = Projection.CASSINI):
     """
     make_rotary_adjusted      master function to produce a gore net stitched at
@@ -520,10 +527,10 @@ def make_rotary_adjusted (image_path,
     focal_length:    focal length (mm)
     alpha_max:       angular size of the image from the centre (radians)
     num_gores:       number of gores (integer)
-    alpha_limit:     angular extent of gored region
     phi_no_cut:      angle of "no-cut zone" (radians)
     rotation:        angle of rotation (radians)
     quality:         image quality (percentage)
+    alpha_limit:     angular extent of gored region
     projection:      map projection to use (Projection class)
     """
     
@@ -537,4 +544,5 @@ def make_rotary_adjusted (image_path,
                         alpha_max,
                         num_gores,
                         phi_no_cut,
+                        alpha_limit,
                         projection)

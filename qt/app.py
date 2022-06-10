@@ -280,7 +280,7 @@ class MainWindow(QMainWindow):
         self.numberOfGoresWidget.setRange(3,24)
         self.numberOfGoresWidget.setSingleStep(1)
         
-        self.retinalSizeWidget.setRange(10,150)
+        self.retinalSizeWidget.setRange(10,180)
         self.retinalSizeWidget.setSingleStep(1)
         
         self.noCutAreaWidget.setRange(0,90)
@@ -960,6 +960,7 @@ class MainWindow(QMainWindow):
                       focal_length = self.focalLengthValue, 
                       alpha_max = deg2rad(self.fundusImageSizeValue), 
                       num_gores = self.numberOfGoresValue, 
+                      alpha_limit = deg2rad(self.retinalSizeValue),
                       phi_no_cut = deg2rad(self.noCutAreaValue),
                       rotation = self.rotationValue,
                       quality = self.qualityValue,

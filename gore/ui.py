@@ -107,7 +107,7 @@ display(w_num_gores)
 
 w_alpha_limit = widgets.IntSlider(
     min = 10,
-    max = 150,
+    max = 180,
     value = 100,
     step = 5,
     description = 'Retinal size (degrees)',
@@ -177,7 +177,8 @@ def get_inputs():
     im = im, 
     focal_length = w_focal_length.value, 
     alpha_max = gore2.deg2rad(w_alpha_max.value), 
-    num_gores = w_num_gores.value, 
+    num_gores = w_num_gores.value,
+    alpha_limit = gore2.deg2rad(w_alpha_limit.value),
     projection = w_projection.value,
     phi_no_cut = gore2.deg2rad(w_phi_no_cut.value),
     )
