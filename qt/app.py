@@ -175,10 +175,10 @@ class MainWindow(QMainWindow):
         
         #starting values
         self.focalLengthValue = 24
-        self.fundusImageSizeValue = 32
+        self.fundusImageSizeValue = 60
         self.numberOfGoresValue = 6
-        self.retinalSizeValue = 100
-        self.noCutAreaValue = 10
+        self.retinalSizeValue = 180
+        self.noCutAreaValue = 20
         self.rotationValue = 0
         self.qualityValue = 20
         self.imagePath = None
@@ -271,16 +271,16 @@ class MainWindow(QMainWindow):
         self.focalLengthWidget.setRange(5,50)
         self.focalLengthWidget.setSingleStep(1)
         
-        self.fundusImageSizeWidget.setRange(5,90)
+        self.fundusImageSizeWidget.setRange(5,180)
         self.fundusImageSizeWidget.setSingleStep(1)
         
         self.numberOfGoresWidget.setRange(3,24)
         self.numberOfGoresWidget.setSingleStep(1)
         
-        self.retinalSizeWidget.setRange(10,180)
+        self.retinalSizeWidget.setRange(10,360)
         self.retinalSizeWidget.setSingleStep(1)
         
-        self.noCutAreaWidget.setRange(0,90)
+        self.noCutAreaWidget.setRange(0,180)
         self.noCutAreaWidget.setSingleStep(1)
         
         self.qualityWidget.setRange(10,100)
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
             self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")  
-            self.statusLabel.setText("Calculating")  
+            self.statusLabel.setText("Calculating: Loading")  
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -516,7 +516,7 @@ class MainWindow(QMainWindow):
             self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")
-            self.statusLabel.setText("Calculating")
+            self.statusLabel.setText("Calculating: Loading")
         elif (self.state == State.CALCULATING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -526,7 +526,7 @@ class MainWindow(QMainWindow):
             self.userGuideAction.setEnabled(False)
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel") 
-            self.statusLabel.setText("Calculating")     
+            self.statusLabel.setText("Calculating: Loading")     
         elif (self.state == State.CANCELLING):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -795,13 +795,13 @@ class MainWindow(QMainWindow):
     def progress_handler(self, i):
         logging.debug ("Calculation progress: {0}".format(i))
         if (i == 0):
-            self.statusLabel.setText("Calculating eye coordinates")
+            self.statusLabel.setText("Calculating: Getting eye coordinates")
         elif (i == 1):
-            self.statusLabel.setText("Rotating projection")
+            self.statusLabel.setText("Calculating: Rotating projection")
         elif (i == 2):
-            self.statusLabel.setText("Projecting")
+            self.statusLabel.setText("Calculating: Projecting")
         elif (i == 3):
-            self.statusLabel.setText("Projecting at pole")
+            self.statusLabel.setText("Calculating: Projecting at pole")
             
     def calculation_complete_handler(self):
         if (self.state == State.NO_INPUT or
@@ -955,10 +955,10 @@ class MainWindow(QMainWindow):
         # collect the inputs to the calculation as a dict
         inputs = dict(image_path = self.imagePath, 
                       focal_length = self.focalLengthValue, 
-                      alpha_max = deg2rad(self.fundusImageSizeValue), 
+                      alpha_max = deg2rad(self.fundusImageSizeValue / 2), # account for difference in angle measurement in gore2 
                       num_gores = self.numberOfGoresValue, 
-                      alpha_limit = deg2rad(self.retinalSizeValue),
-                      phi_no_cut = deg2rad(self.noCutAreaValue),
+                      alpha_limit = deg2rad(self.retinalSizeValue / 2), # account for difference in angle measurement in gore2
+                      phi_no_cut = deg2rad(self.noCutAreaValue / 2), # account for difference in angle measurement in gore2
                       rotation = self.rotationValue,
                       quality = self.qualityValue,
                       )
