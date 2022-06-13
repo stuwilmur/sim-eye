@@ -56,6 +56,11 @@ def fig(img):
     plt.imshow(img)
     plt.show()
     
+def PIL2Img(pilImage):
+    
+    # swap the red and blue channels
+    return cv2.cvtColor(pilImage, cv2.COLOR_RGB2BGR)
+    
     
 def image_from_path(path):
     """
@@ -70,7 +75,7 @@ def image_from_path(path):
     im = cv2.imread(path)
     
     # swap the red and blue channels
-    imRgb = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+    imRgb = PIL2Img(im)
     
     return imRgb
 
@@ -211,15 +216,16 @@ def make_equatorial (im,
         x = (lam_dst - lam0)
         y = phi_dst
         rho = np.sqrt(np.square(x) + np.square(y))
+        rho = np.clip(rho, -1, 1) # use np.clip to limit rho to domain of arcsin
         c = np.arcsin(rho)
-        phi_src = np.arcsin(y * np.sin(c) / rho)
+        phi_src = np.arcsin(np.clip(y * np.sin(c) / rho, -1, 1))
         lam_src = lam0 + np.arctan2(x * np.sin(c), rho * np.cos(c))
         rho_max = np.array(np.greater(rho, phi_cap) * 100, dtype = np.float32)
         phi_src += rho_max
         lam_src += rho_max
     else: # Cassini
         lam_src = lam0 + np.arctan2(np.tan(lam_dst - lam0), np.cos(phi_dst))
-        phi_src = np.arcsin(np.sin(phi_dst) * np.cos(lam_dst - lam0))
+        phi_src = np.arcsin(np.clip(np.sin(phi_dst) * np.cos(lam_dst - lam0), -1, 1))
     
     # limit each projection to within its own gore
     lam_src = lam_src + np.array(np.greater(lam_src, lam0 + gore_width / 2) * 1000, dtype = np.float32)
@@ -337,7 +343,7 @@ def swap (im,
     lam_dst, phi_dst = np.meshgrid(lam_vector, phi_vector)
     
     # prepare the rotation: this is a pi/2 rotation about the y-axis
-    phi_src = np.arcsin(np.cos(lam_dst) * np.cos(phi_dst))
+    phi_src = np.arcsin(np.clip(np.cos(lam_dst) * np.cos(phi_dst), -1, 1))
     lam_src = np.arctan2(np.sin(lam_dst) * np.cos(phi_dst),-np.sin(phi_dst))
     y_src = (phi_src - phi_src_min) * h / (phi_src_max - phi_src_min)
     x_src = (lam_src - lam_src_min) * w / (lam_src_max - lam_src_min)
@@ -392,6 +398,9 @@ def equi(im,
     
     x = np.floor(Lp_x / Lp_max * ht / 2 + ht / 2)
     y = np.floor(Lp_y / Lp_max * wd / 2 + wd / 2)
+    
+    # create a background colour image
+    backgroundImage = Image.new("RGB", (100,100), (123, 230, 123))
             
     # perform the remap
     equi_image = cv2.remap(im, x, y, cv2.INTER_LINEAR, cv2.BORDER_TRANSPARENT) 
