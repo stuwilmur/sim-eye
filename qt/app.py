@@ -961,6 +961,7 @@ class MainWindow(QMainWindow):
                       phi_no_cut = deg2rad(self.noCutAreaValue / 2), # account for difference in angle measurement in gore2
                       rotation = self.rotationValue,
                       quality = self.qualityValue,
+                      background_colour = self.backgroundColour.getRgb()
                       )
         return inputs
         

@@ -56,12 +56,6 @@ def fig(img):
     plt.imshow(img)
     plt.show()
     
-def PIL2Img(pilImage):
-    
-    # swap the red and blue channels
-    return cv2.cvtColor(pilImage, cv2.COLOR_RGB2BGR)
-    
-    
 def image_from_path(path):
     """
     image_from_path:    open an image as a numpy ndarray
@@ -75,7 +69,7 @@ def image_from_path(path):
     im = cv2.imread(path)
     
     # swap the red and blue channels
-    imRgb = PIL2Img(im)
+    imRgb = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
     
     return imRgb
 
@@ -318,7 +312,8 @@ def make_polar (im,
 
 def swap (im, 
          phi_extent = mt.pi / 2, 
-         lam_extent = mt.pi):
+         lam_extent = mt.pi,
+         background_colour = (0, 0, 0, 0)):
     """
     swap    takes an equirectangular (plate-caree) projection of a certain 
             angular extent and rotates it about the y-axis, so the poles lie 
@@ -348,8 +343,12 @@ def swap (im,
     y_src = (phi_src - phi_src_min) * h / (phi_src_max - phi_src_min)
     x_src = (lam_src - lam_src_min) * w / (lam_src_max - lam_src_min)
     
+    # create a background colour image
+    r, g, b, a = background_colour
+    backgroundImage = np.array(Image.new("RGB", (h, w), (r, g, b)))
+    
     # perform the remap
-    dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR, cv2.BORDER_TRANSPARENT)
+    dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR, backgroundImage, cv2.BORDER_TRANSPARENT)
     
     
     return dst
@@ -398,12 +397,9 @@ def equi(im,
     
     x = np.floor(Lp_x / Lp_max * ht / 2 + ht / 2)
     y = np.floor(Lp_y / Lp_max * wd / 2 + wd / 2)
-    
-    # create a background colour image
-    backgroundImage = Image.new("RGB", (100,100), (123, 230, 123))
             
     # perform the remap
-    equi_image = cv2.remap(im, x, y, cv2.INTER_LINEAR, cv2.BORDER_TRANSPARENT) 
+    equi_image = cv2.remap(im, x, y, cv2.INTER_LINEAR) 
             
     return (equi_image, float(lam_max), float(phi_max))
 
@@ -447,18 +443,20 @@ def make_rotary (im,
                 num_gores,   
                 phi_no_cut,
                 alpha_limit = mt.pi,
-                projection = Projection.CASSINI):
+                projection = Projection.CASSINI,
+                background_colour = (0, 0, 0, 0)):
     """
-    make_rotary      master function to produce a gore net stitched at the pole
+    make_rotary          master function to produce a gore net stitched at the pole
     
-    im:              input image (PIL.Image)
-    focal_length:    focal length (mm)
-    alpha_max:       angular size of the image from the centre (radians)
-    num_gores:       number of gores (integer)
-    projection:      projection to use (constant)
-    phi_no_cut:      angle of "no-cut zone" (radians)
-    alpha_limit:     angular extent of gored region
-    projection:      projection to use (Projection class)
+    im:                  input image (PIL.Image)
+    focal_length:        focal length (mm)
+    alpha_max:           angular size of the image from the centre (radians)
+    num_gores:           number of gores (integer)
+    projection:          projection to use (constant)
+    phi_no_cut:          angle of "no-cut zone" (radians)
+    alpha_limit:         angular extent of gored region
+    projection:          projection to use (Projection class)
+    background_colour    background colour to use beyond fundus (R,G,B tuple)
     """
     
     if (isinstance(signal, pyqtBoundSignal)):
@@ -475,7 +473,7 @@ def make_rotary (im,
         signal.emit(Progress.SWAP.value)
     
     # rotate the representation so that the centre of the fundus lies at the "north pole"
-    fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax)
+    fundus_swapped = swap(fundus_equi, phi_extent = phimax, lam_extent = lammax, background_colour = background_colour)
     
     if QThread.currentThread().isInterruptionRequested():
         return
@@ -527,20 +525,22 @@ def make_rotary_adjusted (image_path,
                           rotation,
                           quality,
                           alpha_limit = mt.pi,
-                          projection = Projection.CASSINI):
+                          projection = Projection.CASSINI,
+                          background_colour = (0,0,0,0)):
     """
     make_rotary_adjusted      master function to produce a gore net stitched at
                               the pole, specifying desired quality and rotation
     
-    im:              input image path
-    focal_length:    focal length (mm)
-    alpha_max:       angular size of the image from the centre (radians)
-    num_gores:       number of gores (integer)
-    phi_no_cut:      angle of "no-cut zone" (radians)
-    rotation:        angle of rotation (radians)
-    quality:         image quality (percentage)
-    alpha_limit:     angular extent of gored region
-    projection:      map projection to use (Projection class)
+    im:                 input image path
+    focal_length:       focal length (mm)
+    alpha_max:          angular size of the image from the centre (radians)
+    num_gores:          number of gores (integer)
+    phi_no_cut:         angle of "no-cut zone" (radians)
+    rotation:           angle of rotation (radians)
+    quality:            image quality (percentage)
+    alpha_limit:        angular extent of gored region
+    projection:         map projection to use (Projection class)
+    background_colour   background colour to use beyond fundus (R,G,B tuple)
     """
     
     im = image_from_path(image_path)
@@ -554,4 +554,5 @@ def make_rotary_adjusted (image_path,
                         num_gores,
                         phi_no_cut,
                         alpha_limit,
-                        projection)
+                        projection,
+                        background_colour)
