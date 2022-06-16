@@ -154,7 +154,6 @@ class MainWindow(QMainWindow):
         self.setAcceptDrops(True)
 
         # individual control layouts
-        focalLengthLayout = QHBoxLayout()
         fundusImageSizeLayout = QHBoxLayout()
         numberOfGoresLayout = QHBoxLayout()
         retinalSizeLayout = QHBoxLayout()
@@ -174,7 +173,6 @@ class MainWindow(QMainWindow):
         rightLayout = QVBoxLayout()
         
         #starting values
-        self.focalLengthValue = 24
         self.fundusImageSizeValue = 60
         self.numberOfGoresValue = 6
         self.retinalSizeValue = 180
@@ -186,7 +184,6 @@ class MainWindow(QMainWindow):
         self.outputPath = None
         
         # control labels
-        self.focalLengthLabel = QLabel("")
         self.fundusImageSizeLabel = QLabel("")
         self.numberOfGoresLabel = QLabel("")
         self.retinalSizeLabel = QLabel("")
@@ -198,8 +195,6 @@ class MainWindow(QMainWindow):
         self.update_inputs_text()
 
         # create sliders
-        self.focalLengthWidget = QSlider(Qt.Horizontal)
-        self.focalLengthWidget.setFixedWidth(150)
         self.fundusImageSizeWidget = QSlider(Qt.Horizontal)
         self.fundusImageSizeWidget.setFixedWidth(150)
         self.numberOfGoresWidget = QSlider(Qt.Horizontal)
@@ -214,7 +209,6 @@ class MainWindow(QMainWindow):
         self.qualityWidget.setFixedWidth(150)
         
         # create tooltips
-        self.focalLengthWidget.setToolTip('This is the focal length')
         self.fundusImageSizeWidget.setToolTip('This is the fundus image size')
         self.numberOfGoresWidget.setToolTip('This is the number of gores')
         self.retinalSizeWidget.setToolTip('This is the retinal size')
@@ -229,10 +223,6 @@ class MainWindow(QMainWindow):
         self.previewImageLabel = ImageLabel('\n\n {0} \n\n {1}'.format("Drop image here", "Image must be square and centred"))
         
         # add sliders and button to LHS
-        focalLengthLayout.addWidget(self.focalLengthLabel)
-        focalLengthLayout.addWidget(self.focalLengthWidget)
-        leftLayout.addLayout(focalLengthLayout)
-        
         fundusImageSizeLayout.addWidget(self.fundusImageSizeLabel)
         fundusImageSizeLayout.addWidget(self.fundusImageSizeWidget)
         leftLayout.addLayout(fundusImageSizeLayout)
@@ -268,9 +258,6 @@ class MainWindow(QMainWindow):
         layout.addLayout(rightLayout, 2)
 
         # set slider ranges, steps
-        self.focalLengthWidget.setRange(5,50)
-        self.focalLengthWidget.setSingleStep(1)
-        
         self.fundusImageSizeWidget.setRange(5,180)
         self.fundusImageSizeWidget.setSingleStep(1)
         
@@ -293,7 +280,6 @@ class MainWindow(QMainWindow):
         self.rotationWidget.setMinimum(-360)
         
         # initial values
-        self.focalLengthWidget.setValue(self.focalLengthValue)
         self.fundusImageSizeWidget.setValue(self.fundusImageSizeValue)
         self.numberOfGoresWidget.setValue(self.numberOfGoresValue)
         self.retinalSizeWidget.setValue(self.retinalSizeValue)
@@ -302,11 +288,6 @@ class MainWindow(QMainWindow):
         self.qualityWidget.setValue(self.qualityValue)
 
         # connect input widgets with slots
-        self.focalLengthWidget.valueChanged.connect(self.value_changed)
-        self.focalLengthWidget.sliderMoved.connect(self.slider_position)
-        self.focalLengthWidget.sliderPressed.connect(self.slider_pressed)
-        self.focalLengthWidget.sliderReleased.connect(self.slider_released)
-        
         self.fundusImageSizeWidget.valueChanged.connect(self.value_changed)
         self.fundusImageSizeWidget.sliderMoved.connect(self.slider_position)
         self.fundusImageSizeWidget.sliderPressed.connect(self.slider_pressed)
@@ -885,9 +866,7 @@ class MainWindow(QMainWindow):
             
     def value_changed(self, i):
         # handle updates from the ui elements (sliders)
-        if (self.sender() == self.focalLengthWidget):
-            self.focalLengthValue = i
-        elif (self.sender() == self.fundusImageSizeWidget):
+        if (self.sender() == self.fundusImageSizeWidget):
             self.fundusImageSizeValue = i
         elif (self.sender() == self.numberOfGoresWidget):
             self.numberOfGoresValue = i
@@ -903,7 +882,6 @@ class MainWindow(QMainWindow):
         self.update_inputs_text()
             
     def update_inputs_text(self):
-        self.focalLengthLabel.setText("Focal length: {0}mm".format(self.focalLengthValue))
         self.fundusImageSizeLabel.setText("Image extent: {0}\u00b0".format(self.fundusImageSizeValue))
         self.numberOfGoresLabel.setText("Number of Gores: {0}".format(self.numberOfGoresValue))
         self.retinalSizeLabel.setText("Retinal size: {0}\u00b0".format(self.retinalSizeValue))
@@ -954,7 +932,7 @@ class MainWindow(QMainWindow):
     def get_inputs(self):
         # collect the inputs to the calculation as a dict
         inputs = dict(image_path = self.imagePath, 
-                      focal_length = self.focalLengthValue, 
+                      focal_length = 24, 
                       alpha_max = deg2rad(self.fundusImageSizeValue / 2), # account for difference in angle measurement in gore2 
                       num_gores = self.numberOfGoresValue, 
                       alpha_limit = deg2rad(self.retinalSizeValue / 2), # account for difference in angle measurement in gore2
@@ -1031,7 +1009,7 @@ def main():
     window = MainWindow()
     # close the splash screen after waiting 1s (in addition to load time)
     QTimer.singleShot(1000, lambda: splash.finish(window))
-    window.resize(600,250)
+    window.resize(600,400)
     window.show()
     
     sys.exit( app.exec_() )
