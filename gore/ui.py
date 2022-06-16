@@ -69,22 +69,6 @@ display(w_source_img)
 w_file_upload = widgets.FileUpload()
 display(w_file_upload)
 
-w_focal_length = widgets.FloatSlider(
-    value=24,
-    min=5,
-    max=50.0,
-    step=0.5,
-    description='Focal length:',
-    disabled=False,
-    continuous_update=True,
-    orientation='horizontal',
-    readout=True,
-    readout_format='.1f',
-    style = style,
-    layout = layout,
-)
-display(w_focal_length)
-
 w_alpha_max = widgets.IntSlider(
     min=5,
     max=100,
@@ -175,7 +159,7 @@ def get_inputs():
         im = gore2.rotate_image(im, w_angle.value)
     inputs = dict(
     im = im, 
-    focal_length = w_focal_length.value, 
+    focal_length = 24, 
     alpha_max = gore2.deg2rad(w_alpha_max.value), 
     num_gores = w_num_gores.value,
     alpha_limit = gore2.deg2rad(w_alpha_limit.value),
@@ -205,7 +189,6 @@ def on_edit_parameters(change):
 
 btn_calculate.on_click(on_calculate)
 w_source_img.observe(on_edit_parameters)
-w_focal_length.observe(on_edit_parameters)
 w_alpha_max.observe(on_edit_parameters)
 w_num_gores.observe(on_edit_parameters)
 w_alpha_limit.observe(on_edit_parameters)
