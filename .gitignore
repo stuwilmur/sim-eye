@@ -31,3 +31,4 @@ qt/dist/*
 .DS_Store
 #.gitignore#
 #.gitignore#
+qt/app.spec~
