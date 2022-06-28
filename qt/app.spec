@@ -1,14 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 
+from PyInstaller.utils.hooks import collect_submodules
 block_cipher = None
-
+all_hidden_imports = collect_submodules('gore2')
+print (all_hidden_imports)
 
 a = Analysis(['app.py'],
              pathex=[],
              binaries=[],
-             datas=['resources','resources'],
-             hiddenimports=['gore2'],
+             datas=[('resources','resources')],
+             hiddenimports=all_hidden_imports,
              hookspath=[],
              hooksconfig={},
              runtime_hooks=[],
