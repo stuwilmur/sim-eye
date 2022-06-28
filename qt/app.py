@@ -33,6 +33,7 @@ sys.path.append("../gore")
 from PIL.ImageQt import ImageQt
 from enum import Enum
 from numpy import pi
+from time import perf_counter
 
 aboutText ="""
 About this software
@@ -979,12 +980,15 @@ class Worker(QObject):
         """This is where we do the goring"""
         import gore2
         gore2.signal = self.progress
+        tic = perf_counter()
         im = gore2.make_rotary_adjusted(**self.inputs)
+        toc = perf_counter()
+        time = toc - tic
         if (im == None):
-            logging.debug("Calculation CANCELLED")
+            logging.debug("Calculation CANCELLED after {0:4f}".format(time))
             self.complete = False
         else:
-            logging.debug("Calculation COMPLETED")
+            logging.debug("Calculation COMPLETED in {0:.4f}s".format(time) )
             qim = ImageQt(im)
             pix = QPixmap.fromImage(qim)
             logging.debug("Returned image has size {0}px x {1}px".format(pix.width(), pix.height()))

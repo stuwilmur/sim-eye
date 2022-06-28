@@ -28,6 +28,3 @@ qt/test2.png
 qt/__pycache__/app.cpython-37.pyc
 qt/build/*
 qt/dist/*
-.DS_Store
-#.gitignore#
-#.gitignore#
