@@ -998,7 +998,7 @@ class Worker(QObject):
 
 def main():
     app = QApplication(sys.argv)
-    pixmap = QPixmap("resources/splash.png")
+    pixmap = QPixmap("splash.png")
     splash = QSplashScreen(pixmap)
     
     # show the splash screen first...
