@@ -9,7 +9,7 @@ print (all_hidden_imports)
 a = Analysis(['app.py'],
              pathex=[],
              binaries=[],
-             datas=[('resources','resources')],
+             datas=[('splash.png','.')],
              hiddenimports=all_hidden_imports,
              hookspath=[],
              hooksconfig={},
