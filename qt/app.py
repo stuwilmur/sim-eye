@@ -134,7 +134,7 @@ class MainWindow(QMainWindow):
         logging.basicConfig(stream=sys.stderr, level=logLevel)
         logging.debug('Debugging Gored Sim Eye!')
         
-        self.browser = Browser()
+        #self.browser = Browser()
 
         # window title
         self.setWindowTitle("Gored Sim Eye")
@@ -364,7 +364,7 @@ class MainWindow(QMainWindow):
         self.aboutAction.triggered.connect(self.about_forwarder)
         
         # add the help menu actions
-        helpMenu.addAction(self.userGuideAction)
+        #helpMenu.addAction(self.userGuideAction)
         helpMenu.addAction(self.aboutAction)
         
         # create toolbar and add actions
