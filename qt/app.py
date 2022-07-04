@@ -134,7 +134,7 @@ class MainWindow(QMainWindow):
         logging.basicConfig(stream=sys.stderr, level=logLevel)
         logging.debug('Debugging Gored Sim Eye!')
         
-        #self.browser = Browser()
+        self.browser = Browser()
 
         # window title
         self.setWindowTitle("Gored Sim Eye")
@@ -364,7 +364,7 @@ class MainWindow(QMainWindow):
         self.aboutAction.triggered.connect(self.about_forwarder)
         
         # add the help menu actions
-        #helpMenu.addAction(self.userGuideAction)
+        helpMenu.addAction(self.userGuideAction)
         helpMenu.addAction(self.aboutAction)
         
         # create toolbar and add actions
@@ -1002,7 +1002,7 @@ def main():
     # If the application is run as a bundle, the PyInstaller bootloader
     # extends the sys module by a flag frozen=True and sets the app 
     # path into variable _MEIPASS'.
-        application_path = sys._MEIPASS
+        application_path = os.path.dirname(sys.executable)
     else:
         application_path = os.path.dirname(os.path.abspath(__file__))
     splash_path = os.path.join(application_path, "splash.png")
