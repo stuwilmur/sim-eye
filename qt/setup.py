@@ -12,7 +12,8 @@ from cx_Freeze import setup, Executable
 sys.path.append("../gore")
 
 # Dependencies are automatically detected, but it might need fine tuning.
-build_exe_options = {"includes": ["gore2"], "include_files": ["splash.png", "icon.ico", "userguide.html"]}
+build_exe_options = {"includes": ["gore2"], "include_files": ["splash.png", "icon.icns", "userguide.html"]}
+bdist_mac_options = {"iconfile": "icon.icns"}
 
 # base="Win32GUI" should be used only for Windows GUI app
 base = None
@@ -23,6 +24,6 @@ setup(
     name="Gore Sim Eye",
     version="0.1",
     description="Gore Sim Eye",
-    options={"build_exe": build_exe_options},
-    executables=[Executable("app.py", icon="icon.ico", base=base)],
+    options={"build_exe": build_exe_options, "bdist_mac": bdist_mac_options},
+    executables=[Executable("app.py", icon="icon.icns", base=base)],
 )
