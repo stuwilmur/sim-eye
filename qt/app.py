@@ -21,11 +21,11 @@ from PyQt5.QtWidgets import (QApplication,
                              QSizePolicy,
                              QSplashScreen,
                              QStatusBar,
+                             QTextEdit,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
 from PyQt5.QtGui import QPixmap, QKeySequence, QColor
-from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, QUrl, QTimer
-from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, QTimer, QFile, QTextStream
 import qtawesome as qta
 
 import logging, sys, os
@@ -68,20 +68,26 @@ class State(Enum):
     END                         = 11
     NUMBER_OF_STATES            = 12
 
-class Browser(QWebEngineView):
+class HelpBrowser(QWidget):
     def __init__(self):
         super().__init__()
-        self.loadProgress.connect(logging.debug)
+        
+        self.setWindowTitle("User guide")
+        self.resize(300,270)
+        
+        self.textEdit = QTextEdit()
+        layout = QVBoxLayout()
+        layout.addWidget(self.textEdit)
+        self.setLayout(layout)
+        
         dirPath = os.path.dirname(os.path.realpath(__file__))
         guidePath = os.path.join(dirPath,"userguide.html")
-        self.load(QUrl.fromLocalFile(guidePath))
-        self.loadFinished.connect(self.pageReady)
-
-    def pageReady(self, success):
-        if success:
-            self.resize(640, 480)
-        else:
-            logging.debug('Browser: page failed to load')
+        f = QFile(guidePath)
+        f.open(QFile.ReadOnly|QFile.Text)
+        istream = QTextStream(f)
+        self.textEdit.setHtml(istream.readAll())
+        self.textEdit.setReadOnly(True)
+        f.close()
 
 class ImageLabel(QLabel):
     # Class to display image preview windows
@@ -132,12 +138,12 @@ class MainWindow(QMainWindow):
         else:
             logLevel = logging.FATAL    
         logging.basicConfig(stream=sys.stderr, level=logLevel)
-        logging.debug('Debugging Gored Sim Eye!')
+        logging.debug('Debugging Gore Sim Eye!')
         
-        self.browser = Browser()
+        self.browser = HelpBrowser()
 
         # window title
-        self.setWindowTitle("Gored Sim Eye")
+        self.setWindowTitle("Gore Sim Eye")
         
         # status bar
         self.statusBar = QStatusBar()

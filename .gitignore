@@ -33,3 +33,4 @@ qt/dist/*
 #.gitignore#
 qt/app.spec~
 requirements.txt~
+qt/output
