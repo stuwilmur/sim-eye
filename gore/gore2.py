@@ -384,7 +384,7 @@ def equi(im,
     alpha_max -= deg2rad(1.0)
     phi_max = lam_max = float(alpha_max)
     phi_min, lam_min = -phi_max, -lam_max
-    Lp_max = d * r * np.sin(phi_max) / (d + r * (np.cos(phi_max) - 1))
+    Lp_max = d * np.sin(phi_max) / (np.cos(phi_max) + 1)
     
     # prepare polar coordinate arrays that span the extent
     phis = np.linspace(phi_min, phi_max, ht, dtype = np.float32)
@@ -392,8 +392,8 @@ def equi(im,
     phi, lam = np.meshgrid(phis, lams)
 
     # calculate the source angular coordinates for each pair of destination coordinates
-    Lp_x = d * r * np.sin(phi) / (d + r * (np.cos(phi) - 1))
-    Lp_y = d * r * np.sin(lam) / (d + r * (np.cos(lam) - 1))
+    Lp_x = d * np.sin(phi) / (np.cos(phi) + 1)
+    Lp_y = d * np.sin(lam) / (np.cos(lam) + 1)
     
     x = np.floor(Lp_x / Lp_max * ht / 2 + ht / 2)
     y = np.floor(Lp_y / Lp_max * wd / 2 + wd / 2)
