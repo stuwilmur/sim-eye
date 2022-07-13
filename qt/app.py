@@ -422,10 +422,12 @@ class MainWindow(QMainWindow):
             return False
         
     def about_dialog(self):
-        msgBox = qm();
-        msgBox.setText("Gore Sim Eye");
+        msgBox = qm()
+        msgBox.setText("Gore Sim Eye")
+        msgBox.setWindowTitle("About this software")
+        msgBox.setWindowIcon(QIcon("icon.ico"))
         msgBox.setInformativeText(aboutText)
-        msgBox.exec();
+        msgBox.exec()
         
     def colour_dialog(self):
         dialog = QColorDialog(self)
@@ -613,7 +615,7 @@ class MainWindow(QMainWindow):
                 #... otherwise we shouldn't be here
                 self.raise_state_exception()
         elif (self.state == State.UNSAVED_CHANGES):
-            ret = qm.question(self,'', "Unsaved changes: open new image and lose changes?", qm.Yes | qm.No)
+            ret = qm.question(self,'Open', "Unsaved changes: open new image and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 success = False
                 if (filePath and self.set_image(filePath)):
@@ -689,7 +691,7 @@ class MainWindow(QMainWindow):
             self.clear_image()
             self.transition(State.NO_INPUT)
         elif (self.state == State.UNSAVED_CHANGES):
-            ret = qm.question(self, '', "Unsaved changes: close and lose changes?", qm.Yes | qm.No)
+            ret = qm.question(self, 'Close', "Unsaved changes: close and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 self.clear_image()
                 self.transition(State.NO_INPUT)
@@ -711,14 +713,14 @@ class MainWindow(QMainWindow):
             qApp.quit()
         elif (self.state == State.CALCULATING or
               self.state == State.CALCULATING_SAVED_CHANGES):
-            ret = qm.question(self,'', "Calculation running: really exit?", qm.Yes | qm.No)
+            ret = qm.question(self,'Exit', "Calculation running: really exit?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 self.transition(State.END)
                 qApp.quit()  
             else:
                 self.transition()
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
-            ret = qm.question(self,'', "Calculation running: exit and lose unsaved changes?", qm.Yes | qm.No)
+            ret = qm.question(self,'Exit', "Calculation running: exit and lose unsaved changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 self.transition(State.END)
                 qApp.quit()
@@ -726,7 +728,7 @@ class MainWindow(QMainWindow):
                 self.transition()
         elif (self.state == State.UNSAVED_CHANGES or
               self.state == State.CANCELLING_SAVED_CHANGES):
-            ret = qm.question(self,'', "Unsaved changes: exit and lose changes?", qm.Yes | qm.No)
+            ret = qm.question(self,'Exit', "Unsaved changes: exit and lose changes?", qm.Yes | qm.No)
             if (ret == qm.Yes):
                 self.transition(State.END)
                 qApp.quit()

@@ -34,3 +34,4 @@ qt/dist/*
 qt/app.spec~
 requirements.txt~
 qt/output
+qt/build_and_sign.bat
