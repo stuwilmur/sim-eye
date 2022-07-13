@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QTextEdit,
                              qApp)
 from PyQt5.QtWidgets import QMessageBox as qm
-from PyQt5.QtGui import QPixmap, QKeySequence, QColor
+from PyQt5.QtGui import QPixmap, QKeySequence, QColor, QIcon
 from PyQt5.QtCore import Qt, QObject, QThread, pyqtSignal, QTimer, QFile, QTextStream
 import qtawesome as qta
 
@@ -73,6 +73,7 @@ class HelpBrowser(QWidget):
         super().__init__()
         
         self.setWindowTitle("User guide")
+        self.setWindowIcon(QIcon('icon.ico'))
         self.resize(300,270)
         
         self.textEdit = QTextEdit()
@@ -144,6 +145,9 @@ class MainWindow(QMainWindow):
 
         # window title
         self.setWindowTitle("Gore Sim Eye")
+        
+        # window icon
+        self.setWindowIcon(QIcon(QPixmap('icon.ico')))
         
         # status bar
         self.statusBar = QStatusBar()
