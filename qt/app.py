@@ -30,6 +30,7 @@ import qtawesome as qta
 
 import logging, sys, os
 sys.path.append("../gore")
+import gore2
 from PIL.ImageQt import ImageQt
 from enum import Enum
 from numpy import pi
@@ -1005,7 +1006,6 @@ class Worker(QObject):
 
     def run(self):
         """This is where we do the goring"""
-        import gore2
         gore2.signal = self.progress
         tic = perf_counter()
         im = gore2.make_rotary_adjusted(**self.inputs)
