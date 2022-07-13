@@ -14,7 +14,7 @@ sys.path.append("../gore")
 # Dependencies are automatically detected, but it might need fine tuning.
 build_exe_options = {
     "includes": ["gore2"], 
-    "include_files": ["splash.png", "icon.icns", "userguide.html"], 
+    "include_files": ["splash.png", "icon.icns", "icon.ico", "userguide.html"], 
     "excludes": ["tkinter"], 
     "include_msvcr": True,
     }
