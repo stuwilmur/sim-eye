@@ -35,11 +35,20 @@ from enum import Enum
 from numpy import pi
 from time import perf_counter
 
-aboutText ="""
-About this software
+version = (0,1,0)
+versionText = "Gore Sim Eye v{0}.{1}.{2}".format(*version) 
+aboutText = """
+University of St Andrews 2022
 
-Credits
+Credits:
+
+Andrew Blaikie
+Obaid Khousha
+Stuart Murray
+William J. Williams
+
 """
+aboutText = versionText + aboutText
 
 def deg2rad(x):
     """
