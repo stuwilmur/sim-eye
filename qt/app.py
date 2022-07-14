@@ -62,6 +62,16 @@ def deg2rad(x):
     
     return x / 180 * pi
 
+def get_data_file_path(fileName):
+    if getattr(sys, 'frozen', False):
+        # application is frozen
+        dirPath = os.path.dirname(sys.executable)
+    else:
+        # application is not frozen
+        dirPath = os.path.dirname(os.path.abspath(__file__))
+    filePath = os.path.join(dirPath, fileName)
+    return filePath
+
 class State(Enum):
     # Class defining FSM states
     START                       = 0
@@ -90,15 +100,8 @@ class HelpBrowser(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.textEdit)
         self.setLayout(layout)
-        
-        if getattr(sys, 'frozen', False):
-        # If the application is run as a bundle, the PyInstaller bootloader
-        # extends the sys module by a flag frozen=True and sets the app 
-        # path into variable _MEIPASS'.
-            dirPath = os.path.dirname(sys.executable)
-        else:
-            dirPath = os.path.dirname(os.path.abspath(__file__))
-        guidePath = os.path.join(dirPath,"userguide.html")
+
+        guidePath = get_data_file_path("userguide.html")
         f = QFile(guidePath)
         f.open(QFile.ReadOnly|QFile.Text)
         istream = QTextStream(f)
@@ -1025,14 +1028,7 @@ class Worker(QObject):
 
 def main():
     app = QApplication(sys.argv)
-    if getattr(sys, 'frozen', False):
-    # If the application is run as a bundle, the PyInstaller bootloader
-    # extends the sys module by a flag frozen=True and sets the app 
-    # path into variable _MEIPASS'.
-        application_path = os.path.dirname(sys.executable)
-    else:
-        application_path = os.path.dirname(os.path.abspath(__file__))
-    splash_path = os.path.join(application_path, "splash.png")
+    splash_path = get_data_file_path("splash.png")
     pixmap = QPixmap(splash_path)
     splash = QSplashScreen(pixmap)
     
