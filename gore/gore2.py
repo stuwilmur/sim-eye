@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 gore2
@@ -9,7 +10,6 @@ Created on Wed Nov  3 19:21:00 2021
 from PIL import Image
 import numpy as np
 import math as mt
-import matplotlib.pyplot as plt
 import cv2
 from scipy import ndimage
 from PyQt5.QtCore import QThread, pyqtBoundSignal
@@ -32,29 +32,19 @@ class Projection(Enum):
     CASSINI = 1
     ORTHOGRAPHIC = 2
     
+    
 class Progress(Enum):
     EQUI = 0
     SWAP = 1
     POLAR = 2
     POLECAP = 3
 
+
 """
 Global pyqtBoundSignal, used to emit calculation progress information
 """
 signal = None
 
-
-def fig(img):
-    """
-    fig:        display a figure given an image
-    
-    img:        image object
-    
-    returns:    NULL
-    """
-    plt.figure(figsize = (10,10))
-    plt.imshow(img)
-    plt.show()
     
 def image_from_path(path):
     """
@@ -72,6 +62,7 @@ def image_from_path(path):
     imRgb = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
     
     return imRgb
+
 
 def rotate_image(image, rotate_angle):
     """
@@ -378,7 +369,6 @@ def equi(im,
     # basic quantities
     ht,wd = im.shape[0:2]
     d = focal_length
-    r = 12
     
     # subtract a small amount (1 degree) to avoid going off the edge
     alpha_max -= deg2rad(1.0)
@@ -516,6 +506,7 @@ def make_rotary (im,
     fundus_rotary.paste(fundus_cap, (horizontal_offset, vertical_offset), fundus_cap)
     
     return fundus_rotary
+
 
 def make_rotary_adjusted (image_path,
                           focal_length,

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 goreui
@@ -16,6 +17,7 @@ import asyncio
 import io
 from PIL import Image
 import numpy
+from nbutils import fig
 
 class Timer:
     def __init__(self, timeout, callback):
@@ -172,7 +174,7 @@ def get_inputs():
 @out.capture(clear_output = True)
 def calculate(gore_args, allow_save=False):
     rotary = gore2.make_rotary(**gore_args)
-    gore2.fig(rotary)
+    fig(rotary)
 
     if (allow_save):
         rotary.save("output.png")

@@ -38,3 +38,4 @@ qt/build_and_sign.bat
 gore/__pycache__/gore2.cpython-38.pyc
 gore/__pycache__/gore2.cpython-38.pyc
 gore/__pycache__/gore2.cpython-38.pyc
+*.pyc
