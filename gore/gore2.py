@@ -517,12 +517,13 @@ def make_rotary_adjusted (image_path,
                           quality,
                           alpha_limit = mt.pi,
                           projection = Projection.CASSINI,
-                          background_colour = (0,0,0,0)):
+                          background_colour = (0,0,0,0),
+                          im = None):
     """
     make_rotary_adjusted      master function to produce a gore net stitched at
                               the pole, specifying desired quality and rotation
     
-    im:                 input image path
+    image_path:         input image path
     focal_length:       focal length (mm)
     alpha_max:          angular size of the image from the centre (radians)
     num_gores:          number of gores (integer)
@@ -531,10 +532,13 @@ def make_rotary_adjusted (image_path,
     quality:            image quality (percentage)
     alpha_limit:        angular extent of gored region
     projection:         map projection to use (Projection class)
-    background_colour   background colour to use beyond fundus (R,G,B tuple)
+    background_colour:  background colour to use beyond fundus (R,G,B tuple)
+    im:                 input PIL image (overrides image_path)
     """
     
-    im = image_from_path(image_path)
+    if not im.any():
+        im = image_from_path(image_path)
+        
     im = deres_image(im, float(quality / 100))
     if (rotation > 0):
         im = rotate_image(im, rotation)

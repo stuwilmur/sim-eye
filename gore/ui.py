@@ -18,6 +18,7 @@ import io
 from PIL import Image
 import numpy
 from nbutils import fig
+from matplotlib import colors
 
 class Timer:
     def __init__(self, timeout, callback):
@@ -73,16 +74,16 @@ display(w_file_upload)
 
 w_alpha_max = widgets.IntSlider(
     min=5,
-    max=100,
-    value = 32,
+    max=180,
+    value = 60,
     step=1,
-    description='Fundus image size (degrees):',
+    description='Image extent (degrees):',
     style = style,
     layout = layout)
 display(w_alpha_max)
 
 w_num_gores = widgets.IntSlider(
-    min = 1,
+    min = 3,
     max = 24,
     value = 6,
     step = 1,
@@ -93,8 +94,8 @@ display(w_num_gores)
 
 w_alpha_limit = widgets.IntSlider(
     min = 10,
-    max = 180,
-    value = 100,
+    max = 360,
+    value = 180,
     step = 5,
     description = 'Retinal size (degrees)',
     style = style,
@@ -103,8 +104,8 @@ display(w_alpha_limit)
 
 w_phi_no_cut = widgets.IntSlider(
     min = 0,
-    max = 90,
-    value = 10,
+    max = 180,
+    value = 20,
     step = 1,
     description = "No-cut area (degrees)",
     style=style,
@@ -139,6 +140,14 @@ w_projection = widgets.Dropdown(
 )
 display(w_projection)
 
+w_background_colour = widgets.ColorPicker(
+    concise=False,
+    description='Background colour:',
+    value='#000000',
+    disabled=False
+)
+display(w_background_colour)
+
 btn_calculate = widgets.Button(
     description='Click to gore',
     disabled=False,
@@ -156,24 +165,27 @@ def get_inputs():
         im_path = join(mypath, w_source_img.value)
         im = gore2.image_from_path(im_path)
         
-    im = gore2.deres_image(im, float(w_quality.value / 100))
-    if (w_angle.value > 0):
-        im = gore2.rotate_image(im, w_angle.value)
+    rgba = colors.to_rgba(w_background_colour.value)
+    rgba_scaled = tuple(round(x * 255) for x in rgba)
+        
     inputs = dict(
-    im = im, 
-    focal_length = 24, 
-    alpha_max = gore2.deg2rad(w_alpha_max.value), 
-    num_gores = w_num_gores.value,
-    alpha_limit = gore2.deg2rad(w_alpha_limit.value),
-    projection = w_projection.value,
-    phi_no_cut = gore2.deg2rad(w_phi_no_cut.value),
-    )
+                image_path = None, 
+                focal_length = 24, 
+                alpha_max = gore2.deg2rad(w_alpha_max.value) / 2, 
+                num_gores = w_num_gores.value,
+                phi_no_cut = gore2.deg2rad(w_phi_no_cut.value) / 2,
+                rotation = w_angle.value,
+                quality = w_quality.value,
+                alpha_limit = gore2.deg2rad(w_alpha_limit.value) / 2,
+                projection = w_projection.value,
+                background_colour = rgba_scaled,
+                im = im)
 
     return inputs;
 
 @out.capture(clear_output = True)
 def calculate(gore_args, allow_save=False):
-    rotary = gore2.make_rotary(**gore_args)
+    rotary = gore2.make_rotary_adjusted(**gore_args)
     fig(rotary)
 
     if (allow_save):
@@ -197,6 +209,8 @@ w_alpha_limit.observe(on_edit_parameters)
 w_phi_no_cut.observe(on_edit_parameters)
 w_angle.observe(on_edit_parameters)
 w_quality.observe(on_edit_parameters)
+w_projection.observe(on_edit_parameters)
+w_background_colour.observe(on_edit_parameters)
 
 display(btn_calculate)
 display(out)
