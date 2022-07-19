@@ -36,8 +36,11 @@ from enum import Enum
 from numpy import pi
 from time import perf_counter
 
+# Tuple to store major, minor and revision numbers
 version = (0,1,0)
+
 versionText = "Gore Sim Eye v{0}.{1}.{2}".format(*version) 
+
 aboutText = """
 University of St Andrews 2022
 
@@ -51,6 +54,7 @@ William J. Williams
 Copyright University of St Andrews 2022 (TBC)
 
 """
+
 aboutText = versionText + aboutText
 
 def deg2rad(x):
@@ -91,6 +95,7 @@ class State(Enum):
     NUMBER_OF_STATES            = 12
 
 class HelpBrowser(QWidget):
+    # Class to display the user guide/help dialog
     def __init__(self):
         super().__init__()
         
@@ -198,7 +203,6 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout()
 
         # LHS layout
-        
         leftLayout = QVBoxLayout()
         
         # RHS layout
@@ -212,7 +216,7 @@ class MainWindow(QMainWindow):
         self.rotationValue = 0
         self.qualityValue = 20
         self.imagePath = None
-        self.backgroundColour = QColor("white") # never reset; lost on exit
+        self.backgroundColour = QColor("white") # persistent, never reset; lost on exit
         self.outputPath = None
         
         # control labels
