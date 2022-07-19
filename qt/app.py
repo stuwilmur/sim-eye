@@ -93,7 +93,7 @@ class HelpBrowser(QWidget):
         super().__init__()
         
         self.setWindowTitle("User guide")
-        self.setWindowIcon(QIcon('icon.ico'))
+        self.setWindowIcon(QIcon('resources/icon.ico'))
         self.resize(300,270)
         
         self.textEdit = QTextEdit()
@@ -101,7 +101,7 @@ class HelpBrowser(QWidget):
         layout.addWidget(self.textEdit)
         self.setLayout(layout)
 
-        guidePath = get_data_file_path("userguide.html")
+        guidePath = get_data_file_path("resources/userguide.html")
         f = QFile(guidePath)
         f.open(QFile.ReadOnly|QFile.Text)
         istream = QTextStream(f)
@@ -166,7 +166,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Gore Sim Eye")
         
         # window icon
-        self.setWindowIcon(QIcon(QPixmap('icon.ico')))
+        self.setWindowIcon(QIcon(QPixmap('resources/icon.ico')))
         
         # status bar
         self.statusBar = QStatusBar()
@@ -1028,7 +1028,7 @@ class Worker(QObject):
 
 def main():
     app = QApplication(sys.argv)
-    splash_path = get_data_file_path("splash.png")
+    splash_path = get_data_file_path("resources/splash.png")
     pixmap = QPixmap(splash_path)
     splash = QSplashScreen(pixmap)
     
