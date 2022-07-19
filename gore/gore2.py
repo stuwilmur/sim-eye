@@ -536,7 +536,7 @@ def make_rotary_adjusted (image_path,
     im:                 input PIL image (overrides image_path)
     """
     
-    if not im.any():
+    if im == None or not im.any():
         im = image_from_path(image_path)
         
     im = deres_image(im, float(quality / 100))
