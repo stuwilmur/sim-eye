@@ -69,7 +69,7 @@ Build instructions are given for Windows and Mac OS. Activate the installer envi
 conda activate installerenv
 ```
 ### Build executable
-Build the application as an executable together with its dependencies:
+Build the application as an executable together with its dependencies; the command is common to either platform and will create the appropriate Windows/Mac executable:
 ```
 python setup.py build
 ```
@@ -84,6 +84,4 @@ Build a Mac installer .dmg file (when opened this includes the Applications fold
 python setup.py bdist_dmg
 ```
 ### Build a Windows MSI (Microsoft Installer)
-```
-python setup.py bdist_msi
-```
+There is a Windows batch script app/build.bat which will perform the build. 
