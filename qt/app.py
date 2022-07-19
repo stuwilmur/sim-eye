@@ -48,6 +48,8 @@ Obaid Kousha
 Stuart Murray
 William J. Williams
 
+Copyright University of St Andrews 2022 (TBC)
+
 """
 aboutText = versionText + aboutText
 
@@ -226,17 +228,17 @@ class MainWindow(QMainWindow):
 
         # create sliders
         self.fundusImageSizeWidget = QSlider(Qt.Horizontal)
-        self.fundusImageSizeWidget.setFixedWidth(150)
+        self.fundusImageSizeWidget.setMinimumWidth(150)
         self.numberOfGoresWidget = QSlider(Qt.Horizontal)
-        self.numberOfGoresWidget.setFixedWidth(150)
+        self.numberOfGoresWidget.setMinimumWidth(150)
         self.retinalSizeWidget = QSlider(Qt.Horizontal)
-        self.retinalSizeWidget.setFixedWidth(150)
+        self.retinalSizeWidget.setMinimumWidth(150)
         self.noCutAreaWidget = QSlider(Qt.Horizontal)
-        self.noCutAreaWidget.setFixedWidth(150)
+        self.noCutAreaWidget.setMinimumWidth(150)
         self.rotationWidget = QDoubleSpinBox()
         self.rotationWidget.setGeometry(100, 100, 150, 40)
         self.qualityWidget = QSlider(Qt.Horizontal)
-        self.qualityWidget.setFixedWidth(150)
+        self.qualityWidget.setMinimumWidth(150)
         
         # create tooltips
         self.fundusImageSizeWidget.setToolTip('This is the fundus image size')
