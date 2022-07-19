@@ -64,7 +64,7 @@ If desired, deactivate the environment:
 conda deactivate
 ```
 ## Build the application
-Build instructions are given for Windows and Mac OS. Activate the installer environment:
+Build instructions are given for Windows and Mac OS. Before attempting any build, activate the installer environment:
 ```
 conda activate installerenv
 ```
