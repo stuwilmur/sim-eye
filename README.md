@@ -34,7 +34,7 @@ conda deactivate
 ## Run the application
 Activate the environment (if not already active):
 ```
-conda activate installerenv
+conda activate appenv
 ```
 Run the application:
 ```
