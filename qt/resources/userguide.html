@@ -1,10 +1,87 @@
 <!DOCTYPE html>
 <html>
 <body>
-
 <h1>User Guide</h1>
 <h2 id = introduction>Introduction</h2>
-<p></p>
-
+<h3>Aim</h3>
+<p>Gore Sim Eye is designed to take a fundus image, and produce a net which when printed, 
+may be used to construct a simulation eye (or <strong>sim eye</strong>) suitable for teaching and learning in ophthalmology.
+The net is constructed of several petal-shaped sections known as <em>gores</em>, which may be 
+conveniently joined to make an approximation of a spherical eye.
+<h3>Use</h3>
+The user selects a fundus image file. This image should be square (or very nearly square) and centred, and the fundus
+should be tight against the edge of the image. Common image formats such as JPEG and PNG are supported.
+The user must enter the angular extent of the fundus image. There are various options to control the 
+gore net that is produced, e.g. the number of gores to use. The resulting gores may then be calculated
+and displayed, and finally saved as an image (again, in one of several common formats). This image may
+then be printed, cut out and assembled to form a sim eye.
+</p>
+<h3>Approach</h3>
+<p>
+The process involves two stages:
+<ol>
+<li>the positions of pixels in the fundus image are transformed into corresponding positions in the eye, using
+a simplified optical model, to produce a "map" of the eye based on the input image;
+</li>
+<li>
+this map is projected into a series of gores using a standard map-making projection, and the gores are stitched
+together into a final image.
+</li>
+</ul>
+</p>
+<h2>Intended use and limitations</h2>
+<p>TBD</p>
+<h2>Using this tool</h2>
+<h3>Open an image</h3>
+<p>
+From the <em>File</em> menu, select <em>Open input image</em>, or click the Open icon on the toolbar.
+This will open the file dialog: simply select your chosen fundus image and click OK. The image should 
+be square (or very nearly square) and centred, and the fundus should be tight against the edge of the image. 
+Common image formats such as JPEG and PNG are supported.
+</p>
+<h3>Settings</h3>
+<p>
+Adjust the settings using the controls in the main window. These are as follows (note that hovering over
+any control/icon will display a help "tooltip").
+<ul>
+<li><h4>Image extent</h4>Angular size of the input image, in degrees, measured from edge to edge 
+(i.e. a fundus image that covered the half-sphere would have an extent of 180 degrees).</li>
+<li><h4>Number of gores</h4>Number of gores to produce: a higher number will approximate a sphere better,
+but may be more difficult to assemble.</li>
+<li><h4>Retinal size</h4>Desired angular extent of the gores. Selecting 360 degrees will produce gores that
+make an entire sphere.</li>
+<li><h4>No-cut area</h4>Controls the angular size of the region in the centre of the gores where the gores are
+joined together (i.e. there are no cuts in this region). Selecting a bigger angle may make cutting more straightforward,
+but may also result in a slightly flattened region at the centre.</li>
+<li><h4>Rotation</h4>Degrees by which to rotate the fundus with respect to the petals. Rotation is specified as 
+counter-clockwise: use negative degrees to rotate clockwise. This option is useful, for example, for
+ensuring that interesting parts of the image do not fall on or near the cut edges of a gore.</li>
+<li><h4>Quality</h4>Percentage of original image resolution: 100% corresponds to the maximum original image resolution.
+Using a lower quality setting will make calculation faster, but results in lower-resolution images. This option is
+useful for testing options.</li>
+</ul>
+<h4>Background colour</h4>
+Set the background colour by selecting <em>Choose background colour</em> from the <em>File</em> menu, or 
+clicking the background colour icon on the toolbar. 
+<h3>Gore!</h3>
+<p>
+Click the <em>Gore</em> button to process the image and produce the gores. The status bar will display the current 
+stage of the calculation as it progresses. Once complete, the output is displayed in the preview window.  To cancel 
+the calculation, click the cancel button (you may have to wait a moment for the current stage to complete 
+before the calculation is cancelled).
+</p>
+<h3>Save the image</h3>
+<p>
+Select <em>Save as</em> from the <em>File</em> menu (or click on the Save As icon on the toolbar) to choose a 
+file name and location for saving the resulting gore image. To select the image format for the saved image, 
+simply choose and enter the appropriate file extension,  e.g. .jpg for JPEG, .png for PNG etc. The <em>Save</em>
+option will save the current output image using the current filename.
+</p>
+<h3>Close and Exit</h3>
+<p>
+Close the current image by selecting <em>Close</em> from the <em>File</em> menu, or by clicking the Close icon
+on the toolbar. Exit the application by selecting <em>Exit</em> from the <em>File</em> menu, or by clicking the Exit icon
+on the toolbar. 
+</p>
 </body>
 </html>

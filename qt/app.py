@@ -101,7 +101,7 @@ class HelpBrowser(QWidget):
         
         self.setWindowTitle("User guide")
         self.setWindowIcon(QIcon('resources/icon.ico'))
-        self.resize(300,270)
+        self.resize(550,400)
         
         self.textEdit = QTextEdit()
         layout = QVBoxLayout()
@@ -485,6 +485,10 @@ class MainWindow(QMainWindow):
             logging.debug("No transition: %s in %s", self.state, caller)
             
     def update_widgets(self):
+        
+        windowText = "Gore Sim Eye"
+        if (self.outputPath != None):
+            windowText = windowText + " - " + self.outputPath
         # update the menu items and the gore/cancel button
         if (self.state ==  State.START):
             self.openAction.setEnabled(False)
@@ -496,6 +500,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setE
             self.goreButtonWidget.setText("")
             self.statusLabel.setText("")
+            self.setWindowTitle(windowText)
         elif (self.state == State.NO_INPUT):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(False)
@@ -506,6 +511,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Gore")
             self.statusLabel.setText("No input image selected")
+            self.setWindowTitle(windowText)
         elif (self.state == State.READY_TO_GORE):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(False)
@@ -516,6 +522,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
             self.statusLabel.setText("Ready to gore")
+            self.setWindowTitle(windowText)
         elif (self.state == State.CALCULATING):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -526,6 +533,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")  
             self.statusLabel.setText("Calculating: Loading")  
+            self.setWindowTitle(windowText)
         elif (self.state == State.CALCULATING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -536,6 +544,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel")
             self.statusLabel.setText("Calculating: Loading")
+            self.setWindowTitle(windowText)
         elif (self.state == State.CALCULATING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -546,6 +555,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Cancel") 
             self.statusLabel.setText("Calculating: Loading")     
+            self.setWindowTitle(windowText)
         elif (self.state == State.CANCELLING):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -556,6 +566,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancelling...")
             self.statusLabel.setText("Cancelling")
+            self.setWindowTitle(windowText)
         elif (self.state == State.CANCELLING_UNSAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -566,6 +577,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancelling...")
             self.statusLabel.setText("Cancelling")
+            self.setWindowTitle(windowText)
         elif (self.state == State.CANCELLING_SAVED_CHANGES):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -576,6 +588,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("Cancelling...")
             self.statusLabel.setText("Cancelling")
+            self.setWindowTitle(windowText)
         elif (self.state == State.UNSAVED_CHANGES):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(True)
@@ -586,6 +599,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
             self.statusLabel.setText("Unsaved changes")
+            self.setWindowTitle(windowText)
         elif (self.state == State.SAVED_CHANGES):
             self.openAction.setEnabled(True)
             self.saveAction.setEnabled(True)
@@ -596,6 +610,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(True)
             self.goreButtonWidget.setText("Gore")
             self.statusLabel.setText("Saved changes")
+            self.setWindowTitle(windowText)
         elif (self.state == State.END):
             self.openAction.setEnabled(False)
             self.saveAction.setEnabled(False)
@@ -606,6 +621,7 @@ class MainWindow(QMainWindow):
             self.goreButtonWidget.setEnabled(False)
             self.goreButtonWidget.setText("")
             self.statusLabel.setText("End")
+            self.setWindowTitle(windowText)
         else:
             # invalid state: do nothing
             pass
@@ -965,6 +981,7 @@ class MainWindow(QMainWindow):
     
     def clear_image(self):
         self.imagePath = None
+        self.outputPath = None
         self.previewImageLabel.clearPixmap()
         
     def get_inputs(self):
