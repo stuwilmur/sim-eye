@@ -100,7 +100,7 @@ class HelpBrowser(QWidget):
         super().__init__()
         
         self.setWindowTitle("User guide")
-        self.setWindowIcon(QIcon('resources/icon.ico'))
+        self.setWindowIcon(QIcon('icon.ico'))
         self.resize(550,400)
         
         self.textEdit = QTextEdit()
@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Gore Sim Eye")
         
         # window icon
-        self.setWindowIcon(QIcon(QPixmap('resources/icon.ico')))
+        self.setWindowIcon(QIcon(QPixmap('icon.ico')))
         
         # status bar
         self.statusBar = QStatusBar()
@@ -450,7 +450,7 @@ class MainWindow(QMainWindow):
         msgBox = qm()
         msgBox.setText("Gore Sim Eye")
         msgBox.setWindowTitle("About this software")
-        msgBox.setWindowIcon(QIcon("icon.ico"))
+        msgBox.setWindowIcon(QIcon('icon.ico'))
         msgBox.setInformativeText(aboutText)
         msgBox.exec()
         
@@ -633,7 +633,7 @@ class MainWindow(QMainWindow):
             self.state == State.SAVED_CHANGES):
             success = False
             if (filePath  and self.set_image(filePath)):
-                success == True
+                success = True
             elif (self.open_image_dialog()):
                 success = True
             if (success):
