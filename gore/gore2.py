@@ -310,9 +310,10 @@ def swap (im,
             angular extent and rotates it about the y-axis, so the poles lie 
             at the equator and the equator becomes a meridian.
             
-    im:         input image (ndarray)
-    phi_extent: latitudnal extent (float)
-    lam_extent: longitudnal extent (float)
+    im:                     input image (ndarray)
+    phi_extent:             latitudnal extent (float)
+    lam_extent:             longitudnal extent (float)
+    background_colour:      background colour to use beyond extent (R,G,B,A tuple)
     
     returns:    output image (ndarray)
     """
@@ -446,7 +447,7 @@ def make_rotary (im,
     phi_no_cut:          angle of "no-cut zone" (radians)
     alpha_limit:         angular extent of gored region
     projection:          projection to use (Projection class)
-    background_colour    background colour to use beyond fundus (R,G,B tuple)
+    background_colour    background colour to use beyond fundus (R,G,B,A tuple)
     """
     
     if (isinstance(signal, pyqtBoundSignal)):
@@ -532,7 +533,7 @@ def make_rotary_adjusted (image_path,
     quality:            image quality (percentage)
     alpha_limit:        angular extent of gored region
     projection:         map projection to use (Projection class)
-    background_colour:  background colour to use beyond fundus (R,G,B tuple)
+    background_colour:  background colour to use beyond fundus (R,G,B,A tuple)
     im:                 input PIL image (overrides image_path)
     """
     

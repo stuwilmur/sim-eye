@@ -68,7 +68,7 @@ executable = Executable(
 
 setup(
     name="Gore Sim Eye",
-    version="0.1",
+    version="0.1.0",
     description="Gore Sim Eye",
     executables=[executable],
     options={
