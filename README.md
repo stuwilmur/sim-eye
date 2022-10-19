@@ -45,9 +45,9 @@ To enable debug output, run using the debug flag `-d`:
 python app.py -d
 ```
 ## Build environment setup
-The requirements to build the requirement are slightly different to those above (cx_freeze is required, matplotlib is not).
+The requirements to build the application are slightly different to those above (cx_freeze is required, matplotlib is not).
 
-With Anaconda, in the app/ folder, create the environment (called installerenv here: you can replace this with your preferred name for the environment):
+With Anaconda, in the qt/ folder, create the environment (called installerenv here: you can replace this with your preferred name for the environment):
 ```
 conda create --name installerenv python=3.7.11
 ```
