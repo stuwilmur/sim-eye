@@ -36,7 +36,7 @@ Activate the environment (if not already active):
 ```
 conda activate appenv
 ```
-Run the application:
+Navigate to the qt/ directory, then Run the application:
 ```
 python app.py
 ```
