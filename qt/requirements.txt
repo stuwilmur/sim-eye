@@ -1,6 +1,6 @@
 PyQt5
 pillow
-opencv-python-headless==3.4.2.17
+opencv-python-headless --prefer-binary
 scipy==1.7.1
 qtawesome
 cx_Freeze==6.11.1
