@@ -27,10 +27,6 @@ Finally, set up the environment by running environment.py:
 ```
 python environment.py
 ```
-If you also want to be able to run the notebooks, install Jupyter:
-```
-pip install jupyter
-```
 Finally, once finished, deactivate the environment:
 ```
 conda deactivate
