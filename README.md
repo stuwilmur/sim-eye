@@ -27,7 +27,11 @@ Finally, set up the environment by running environment.py:
 ```
 python environment.py
 ```
-If desired, deactivate the environment:
+If you also want to be able to run the notebooks, install Jupyter:
+```
+pip install jupyter
+```
+Finally, once finished, deactivate the environment:
 ```
 conda deactivate
 ```
@@ -36,7 +40,7 @@ Activate the environment (if not already active):
 ```
 conda activate appenv
 ```
-Run the application:
+Navigate to the qt/ directory, then Run the application:
 ```
 python app.py
 ```
