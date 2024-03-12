@@ -1,0 +1,8 @@
+Pillow
+numpy
+matplotlib
+ipywidgets
+scipy
+opencv-python-headless
+voila
+PyQt5
