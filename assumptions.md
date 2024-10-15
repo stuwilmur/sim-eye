@@ -10,11 +10,11 @@ This is clearly a crude approximation. We can calculate how a position in the ey
 
 Then:
 ```math
-\displaylines{\tan(\beta) = L_p/d = \text{BC}/\text{AC},\\
+\alignleft{\displaylines{\tan(\beta) = L_p/d = \text{BC}/\text{AC},\\
 \text{BC} = r\sin(\gamma),\\
 \text{AC} = r - r\cos(\gamma)$\\
 \Rightarrow \tan(\beta) = \frac{r\sin(\gamma)}{r(1-\cos(\gamma)}$\\
-\Rightarrow L_p = \frac{d\sin(\gamma)}{1-\cos(\gamma)} = \frac{d\sin(\pi-\alpha)}{1-\cos(\pi-\alpha)} = \frac{d\sin(\alpha)}{1+\cos(\alpha)}}.
+\Rightarrow L_p = \frac{d\sin(\gamma)}{1-\cos(\gamma)} = \frac{d\sin(\pi-\alpha)}{1-\cos(\pi-\alpha)} = \frac{d\sin(\alpha)}{1+\cos(\alpha)}}}.
 ```
 
 This expression is used to remap the input image target pixels, back to an equirectangular projection of source retina angles. Given the resulting equirectangular representation of the retinal pixels, we can "gore" this map by breaking it up into segments of longitude, and projecting each segment about a central meridian.
