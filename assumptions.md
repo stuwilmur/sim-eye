@@ -4,7 +4,7 @@ The model assumes that the eye is
 1. a sphere, radius 12mm;
 2. optically a pinhole camera, with the focus at the pupil and a focal length of 24mm; this is the model assumption for the fundus images which are used as inputs.
 
-This is clearly a crude approximation. We can calculate how a position in the eye maps to a position on the image plane under such a simple approximation. Considering a single plane for simplicity, where:
+This is clearly a crude approximation. We can calculate how a position in the eye maps to a position on the image plane under such a simple approximation. Consider a single plane for simplicity, where:
 - B is a source point on the retina, with angle $\alpha$;
 - E is a target point in the image, with distance ${Lp}$ to the centre of the image;
 - r is the eye radius = 12:
@@ -17,7 +17,7 @@ The task is then to calculate the image distance $L_p$, given a retinal angle $\
 \displaylines{\tan(\beta) = L_p/d = \text{BC}/\text{AC},\\
 \text{BC} = r\sin(\gamma),\\
 \text{AC} = r - r\cos(\gamma)$\\
-\Rightarrow \tan(\beta) = \frac{r\sin(\gamma)}{r(1-\cos(\gamma)}$\\
+\Rightarrow \tan(\beta) = \frac{r\sin(\gamma)}{r(1-\cos(\gamma)}\\
 \Rightarrow L_p = \frac{d\sin(\gamma)}{1-\cos(\gamma)} = \frac{d\sin(\pi-\alpha)}{1-\cos(\pi-\alpha)} = \frac{d\sin(\alpha)}{1+\cos(\alpha)}}.
 ```
 
