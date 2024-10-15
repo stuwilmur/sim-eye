@@ -6,7 +6,11 @@ The model assumes that the eye is
 
 This is clearly a crude approximation. We can calculate how a position in the eye maps to a position on the image plane under such a simple approximation. Considering a single plane for simplicity, where:
 - B is a source point on the retina, with angle $\alpha$;
-- E is a target point in the image, with distance ${Lp}$ to the centre of the image
+- E is a target point in the image, with distance ${Lp}$ to the centre of the image:![geometry close](https://github.com/user-attachments/assets/31c9644d-517b-45f3-8270-59ff9f3f5e69)
+![geometry wide](https://github.com/user-attachments/assets/c0a7106f-c815-4391-b991-8bdbacf68833)
+
+
+
 
 Then:
 ```math
