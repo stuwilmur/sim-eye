@@ -3,6 +3,6 @@ numpy
 matplotlib
 ipywidgets
 scipy
-opencv-python-headless
+opencv-python-headless<=4.9.0.80
 voila
 PyQt5
