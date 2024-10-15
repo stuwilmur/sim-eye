@@ -12,8 +12,8 @@ Then:
 - $\tan(\beta) = L_p/d = \text{BC}/\text{AC}$
 - $\text{BC} = r\sin(\gamma)$
 - $\text{AC} = r - r\cos(\gamma)$
-- $\Rarrow \tan(\beta) = \frak{r\sin(\gamma)}{r(1-\cos(\gamma)}$
-- $L_p = \frak{d\sin(\gamma}{1-\cos(\gamma)} = \frak{d\sin(\pi-\alpha)}{1-\cos(\pi-\alpha)} = \frak{d\sin(\alpha)}{1+\cos(\alpha)}$.
+- $\Rightarrow \tan(\beta) = \frak{r\sin(\gamma)}{r(1-\cos(\gamma)}$
+- $L_p = \frac{d\sin(\gamma}{1-\cos(\gamma)} = \frac{d\sin(\pi-\alpha)}{1-\cos(\pi-\alpha)} = \frac{d\sin(\alpha)}{1+\cos(\alpha)}$.
 
 This expression is used to remap the input image target pixels, back to an equirectangular projection of source retina angles. Given the resulting equirectangular representation of the retinal pixels, we can "gore" this map by breaking it up into segments of longitude, and projecting each segment about a central meridian.
 
