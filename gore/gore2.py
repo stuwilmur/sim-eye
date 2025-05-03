@@ -300,65 +300,77 @@ def make_polar (im,
         
     return pole_stitched
     
+def convert_to_rgb_with_background(im, background_colour):
+    """
+    Converts an RGBA image to RGB by applying the specified background color to transparent areas.
 
-def swap (im, 
-         phi_extent = mt.pi / 2, 
-         lam_extent = mt.pi,
-         background_colour = (0, 0, 0, 0)):
+    im:                Input image (PIL.Image)
+    background_colour: Background color as a tuple (R, G, B)
+
+    Returns:           Converted RGB image (PIL.Image)
     """
-    swap    takes an equirectangular (plate-caree) projection of a certain 
-            angular extent and rotates it about the y-axis, so the poles lie 
+    if im.mode == "RGBA":
+        # Create a new background image
+        r, g, b, _ = background_colour
+        background = Image.new("RGB", im.size, (r, g, b))
+        # Paste the image onto the background using transparency
+        background.paste(im, mask=im.split()[3])  # Use the alpha channel as a mask
+        return background
+    else:
+        return im.convert("RGB")
+
+def swap(im, phi_extent=mt.pi / 2, lam_extent=mt.pi, background_colour=(0, 0, 0, 0)):
+    """
+    swap    takes an equirectangular (plate-caree) projection of a certain
+            angular extent and rotates it about the y-axis, so the poles lie
             at the equator and the equator becomes a meridian.
-            
-    im:                     input image (ndarray)
-    phi_extent:             latitudnal extent (float)
-    lam_extent:             longitudnal extent (float)
-    background_colour:      background colour to use beyond extent (R,G,B,A tuple)
-    
-    returns:    output image (ndarray)
+
+    im:                     Input image (ndarray)
+    phi_extent:             Latitudinal extent (float)
+    lam_extent:             Longitudinal extent (float)
+    background_colour:      Background color to use beyond extent (R, G, B, A tuple)
+
+    Returns:                Output image (ndarray)
     """
-    
-    # calculate basic quantities
+    # Calculate basic quantities
     h, w = im.shape[:2]
-    
-    # calculate the angular extents
+
+    # Calculate the angular extents
     phi_dst_min, phi_dst_max, lam_dst_min, lam_dst_max = -np.pi / 2, np.pi / 2, 0, 2 * np.pi
     phi_src_min, phi_src_max, lam_src_min, lam_src_max = -phi_extent, phi_extent, -lam_extent, lam_extent
-    
-    # create arrays of polar coordinates spanning the extent
-    phi_vector, lam_vector = np.linspace(phi_dst_min, phi_dst_max, h, dtype = np.float32), np.linspace(lam_dst_min, lam_dst_max, w, dtype = np.float32)
+
+    # Create arrays of polar coordinates spanning the extent
+    phi_vector, lam_vector = np.linspace(phi_dst_min, phi_dst_max, h, dtype=np.float32), np.linspace(lam_dst_min, lam_dst_max, w, dtype=np.float32)
     lam_dst, phi_dst = np.meshgrid(lam_vector, phi_vector)
-    
-    # prepare the rotation: this is a pi/2 rotation about the y-axis
+
+    # Prepare the rotation: this is a pi/2 rotation about the y-axis
     phi_src = np.arcsin(np.clip(np.cos(lam_dst) * np.cos(phi_dst), -1, 1))
-    lam_src = np.arctan2(np.sin(lam_dst) * np.cos(phi_dst),-np.sin(phi_dst))
+    lam_src = np.arctan2(np.sin(lam_dst) * np.cos(phi_dst), -np.sin(phi_dst))
     y_src = (phi_src - phi_src_min) * h / (phi_src_max - phi_src_min)
     x_src = (lam_src - lam_src_min) * w / (lam_src_max - lam_src_min)
-    
-    # create a background colour image
-    r, g, b, a = background_colour
-    backgroundImage = np.array(Image.new("RGB", (h, w), (r, g, b)))
-    
-    # perform the remap
-    dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR, backgroundImage, cv2.BORDER_TRANSPARENT)
-    
-    
+
+    # Create a background color image
+    r, g, b, _ = background_colour
+    background_image = np.zeros((h, w, 3), dtype=np.uint8)
+    background_image[:, :] = (r, g, b)
+
+    # Perform the remap
+    dst = cv2.remap(im, x_src, y_src, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(r, g, b))
+
     return dst
 
 
 def equi(im, 
-         alpha_max, 
-         focal_length = 24):
+         alpha_max):
     """
     equi         takes a fundus image and computes its equirectangular (plate caree) 
-                 projection assuming a simple spherical eye model
+                 projection assuming a simple spherical eye model, with radius = 11mm
+                 and focal length = 17mm
 
     im           input image (ndarray)
             
     alpha_max    angular size of the image from the centre (radians)
             
-    focal length default assumes a focal length of one eye diameter (mm)
-    
     returns:     (
                   output image (ndarray), 
                   lambda max (float), 
@@ -369,13 +381,12 @@ def equi(im,
     
     # basic quantities
     ht,wd = im.shape[0:2]
-    d = focal_length
     
     # subtract a small amount (1 degree) to avoid going off the edge
     alpha_max -= deg2rad(1.0)
     phi_max = lam_max = float(alpha_max)
     phi_min, lam_min = -phi_max, -lam_max
-    Lp_max = d * np.sin(phi_max) / (np.cos(phi_max) + 1)
+    Lp_max = 17 * 11 * np.sin(phi_max) / (6 + 11 * np.cos(phi_max))
     
     # prepare polar coordinate arrays that span the extent
     phis = np.linspace(phi_min, phi_max, ht, dtype = np.float32)
@@ -383,8 +394,8 @@ def equi(im,
     phi, lam = np.meshgrid(phis, lams)
 
     # calculate the source angular coordinates for each pair of destination coordinates
-    Lp_x = d * np.sin(phi) / (np.cos(phi) + 1)
-    Lp_y = d * np.sin(lam) / (np.cos(lam) + 1)
+    Lp_x = 17 * 11 * np.sin(phi) / (6 + 11 * np.cos(phi))
+    Lp_y = 17 * 11 * np.sin(lam) / (6 + 11 * np.cos(lam))
     
     x = np.floor(Lp_x / Lp_max * ht / 2 + ht / 2)
     y = np.floor(Lp_y / Lp_max * wd / 2 + wd / 2)
@@ -429,7 +440,6 @@ def polecap (im,
 
 
 def make_rotary (im, 
-                focal_length, 
                 alpha_max, 
                 num_gores,   
                 phi_no_cut,
@@ -440,7 +450,6 @@ def make_rotary (im,
     make_rotary          master function to produce a gore net stitched at the pole
     
     im:                  input image (PIL.Image)
-    focal_length:        focal length (mm)
     alpha_max:           angular size of the image from the centre (radians)
     num_gores:           number of gores (integer)
     projection:          projection to use (constant)
@@ -454,8 +463,7 @@ def make_rotary (im,
         signal.emit(Progress.EQUI.value)
     
     # create the equirectangular (plate-caree) representation of the fundus
-    fundus_equi, lammax, phimax = equi(im = im, 
-                          focal_length = focal_length, alpha_max = alpha_max)
+    fundus_equi, lammax, phimax = equi(im = im, alpha_max = alpha_max)
     
     if QThread.currentThread().isInterruptionRequested():
         return
@@ -509,46 +517,34 @@ def make_rotary (im,
     return fundus_rotary
 
 
-def make_rotary_adjusted (image_path,
-                          focal_length,
-                          alpha_max,
-                          num_gores,
-                          phi_no_cut,
-                          rotation,
-                          quality,
-                          alpha_limit = mt.pi,
-                          projection = Projection.CASSINI,
-                          background_colour = (0,0,0,0),
-                          im = None):
+def make_rotary_adjusted(image_path, alpha_max, num_gores, phi_no_cut, rotation, quality, alpha_limit=mt.pi, projection=Projection.CASSINI, background_colour=(0, 0, 0, 0), im=None):
     """
-    make_rotary_adjusted      master function to produce a gore net stitched at
-                              the pole, specifying desired quality and rotation
-    
-    image_path:         input image path
-    focal_length:       focal length (mm)
-    alpha_max:          angular size of the image from the centre (radians)
-    num_gores:          number of gores (integer)
-    phi_no_cut:         angle of "no-cut zone" (radians)
-    rotation:           angle of rotation (radians)
-    quality:            image quality (percentage)
-    alpha_limit:        angular extent of gored region
-    projection:         map projection to use (Projection class)
-    background_colour:  background colour to use beyond fundus (R,G,B,A tuple)
-    im:                 input PIL image (overrides image_path)
+    make_rotary_adjusted      Master function to produce a gore net stitched at
+                              the pole, specifying desired quality and rotation.
+
+    image_path:         Input image path
+    alpha_max:          Angular size of the image from the center (radians)
+    num_gores:          Number of gores (integer)
+    phi_no_cut:         Angle of "no-cut zone" (radians)
+    rotation:           Angle of rotation (radians)
+    quality:            Image quality (percentage)
+    alpha_limit:        Angular extent of gored region
+    projection:         Map projection to use (Projection class)
+    background_colour:  Background color to use beyond fundus (R, G, B, A tuple)
+    im:                 Input PIL image (overrides image_path)
     """
-    
     if im is None:
         im = image_from_path(image_path)
-        
+
+    # Apply quality resizing
     im = deres_image(im, float(quality / 100))
-    if (rotation > 0):
+
+    # Apply rotation if specified
+    if rotation > 0:
         im = rotate_image(im, rotation)
-        
-    return make_rotary (im,
-                        focal_length,
-                        alpha_max,
-                        num_gores,
-                        phi_no_cut,
-                        alpha_limit,
-                        projection,
-                        background_colour)
+
+    # Ensure the image has the correct background color for JPEG
+    im = convert_to_rgb_with_background(Image.fromarray(im), background_colour)
+
+    # Continue with the rotary creation process
+    return make_rotary(np.array(im), alpha_max, num_gores, phi_no_cut, alpha_limit, projection, background_colour)

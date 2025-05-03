@@ -37,12 +37,12 @@ from numpy import pi
 from time import perf_counter
 
 # Tuple to store major, minor and revision numbers
-version = (0,1,1)
+version = (0,2,0)
 
 versionText = "Gore Sim Eye v{0}.{1}.{2}".format(*version) 
 
 aboutText = """
-University of St Andrews 2023
+University of St Andrews 2023 - 2025
 
 Credits:
 
@@ -1007,7 +1007,6 @@ class MainWindow(QMainWindow):
     def get_inputs(self):
         # collect the inputs to the calculation as a dict
         inputs = dict(image_path = self.imagePath, 
-                      focal_length = 24, 
                       alpha_max = deg2rad(self.fundusImageSizeValue / 2), # account for difference in angle measurement in gore2 
                       num_gores = self.numberOfGoresValue, 
                       alpha_limit = deg2rad(self.retinalSizeValue / 2), # account for difference in angle measurement in gore2

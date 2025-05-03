@@ -170,7 +170,6 @@ def get_inputs():
         
     inputs = dict(
                 image_path = None, 
-                focal_length = 24, 
                 alpha_max = gore2.deg2rad(w_alpha_max.value) / 2, 
                 num_gores = w_num_gores.value,
                 phi_no_cut = gore2.deg2rad(w_phi_no_cut.value) / 2,
