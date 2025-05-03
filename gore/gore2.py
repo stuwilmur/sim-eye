@@ -361,18 +361,16 @@ def swap(im, phi_extent=mt.pi / 2, lam_extent=mt.pi, background_colour=(0, 0, 0,
 
 
 def equi(im, 
-         alpha_max, 
-         focal_length = 24):
+         alpha_max):
     """
     equi         takes a fundus image and computes its equirectangular (plate caree) 
-                 projection assuming a simple spherical eye model
+                 projection assuming a simple spherical eye model, with radius = 11mm
+                 and focal length = 17mm
 
     im           input image (ndarray)
             
     alpha_max    angular size of the image from the centre (radians)
             
-    focal length default assumes a focal length of one eye diameter (mm)
-    
     returns:     (
                   output image (ndarray), 
                   lambda max (float), 
@@ -383,13 +381,12 @@ def equi(im,
     
     # basic quantities
     ht,wd = im.shape[0:2]
-    d = focal_length
     
     # subtract a small amount (1 degree) to avoid going off the edge
     alpha_max -= deg2rad(1.0)
     phi_max = lam_max = float(alpha_max)
     phi_min, lam_min = -phi_max, -lam_max
-    Lp_max = d * np.sin(phi_max) / (np.cos(phi_max) + 1)
+    Lp_max = 17 * 11 * np.sin(phi_max) / (6 + 11 * np.cos(phi_max))
     
     # prepare polar coordinate arrays that span the extent
     phis = np.linspace(phi_min, phi_max, ht, dtype = np.float32)
@@ -397,8 +394,8 @@ def equi(im,
     phi, lam = np.meshgrid(phis, lams)
 
     # calculate the source angular coordinates for each pair of destination coordinates
-    Lp_x = d * np.sin(phi) / (np.cos(phi) + 1)
-    Lp_y = d * np.sin(lam) / (np.cos(lam) + 1)
+    Lp_x = 17 * 11 * np.sin(phi) / (6 + 11 * np.cos(phi))
+    Lp_y = 17 * 11 * np.sin(lam) / (6 + 11 * np.cos(lam))
     
     x = np.floor(Lp_x / Lp_max * ht / 2 + ht / 2)
     y = np.floor(Lp_y / Lp_max * wd / 2 + wd / 2)
@@ -443,7 +440,6 @@ def polecap (im,
 
 
 def make_rotary (im, 
-                focal_length, 
                 alpha_max, 
                 num_gores,   
                 phi_no_cut,
@@ -454,7 +450,6 @@ def make_rotary (im,
     make_rotary          master function to produce a gore net stitched at the pole
     
     im:                  input image (PIL.Image)
-    focal_length:        focal length (mm)
     alpha_max:           angular size of the image from the centre (radians)
     num_gores:           number of gores (integer)
     projection:          projection to use (constant)
@@ -468,8 +463,7 @@ def make_rotary (im,
         signal.emit(Progress.EQUI.value)
     
     # create the equirectangular (plate-caree) representation of the fundus
-    fundus_equi, lammax, phimax = equi(im = im, 
-                          focal_length = focal_length, alpha_max = alpha_max)
+    fundus_equi, lammax, phimax = equi(im = im, alpha_max = alpha_max)
     
     if QThread.currentThread().isInterruptionRequested():
         return
@@ -523,13 +517,12 @@ def make_rotary (im,
     return fundus_rotary
 
 
-def make_rotary_adjusted(image_path, focal_length, alpha_max, num_gores, phi_no_cut, rotation, quality, alpha_limit=mt.pi, projection=Projection.CASSINI, background_colour=(0, 0, 0, 0), im=None):
+def make_rotary_adjusted(image_path, alpha_max, num_gores, phi_no_cut, rotation, quality, alpha_limit=mt.pi, projection=Projection.CASSINI, background_colour=(0, 0, 0, 0), im=None):
     """
     make_rotary_adjusted      Master function to produce a gore net stitched at
                               the pole, specifying desired quality and rotation.
 
     image_path:         Input image path
-    focal_length:       Focal length (mm)
     alpha_max:          Angular size of the image from the center (radians)
     num_gores:          Number of gores (integer)
     phi_no_cut:         Angle of "no-cut zone" (radians)
@@ -554,4 +547,4 @@ def make_rotary_adjusted(image_path, focal_length, alpha_max, num_gores, phi_no_
     im = convert_to_rgb_with_background(Image.fromarray(im), background_colour)
 
     # Continue with the rotary creation process
-    return make_rotary(np.array(im), focal_length, alpha_max, num_gores, phi_no_cut, alpha_limit, projection, background_colour)
+    return make_rotary(np.array(im), alpha_max, num_gores, phi_no_cut, alpha_limit, projection, background_colour)
