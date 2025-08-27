@@ -1,7 +1,7 @@
 # sim-eye
 A project for producing low-cost, easily-assembled simulation eyes for use in ophthalmology training.
 
-Note: the underlying model, the algorithm and the provided implementation are all being actively developed and have yet to be peer reviewed. They are provided here purely for information. See the [assumptions](assumptions.md) for further details of the model.
+Note: the underlying model, the algorithm and the provided implementation are all being actively developed and have are in the process of being peer reviewed.
 
 ## Interactive examples
 A simple interface to produce gores from example images or by uploading image files
